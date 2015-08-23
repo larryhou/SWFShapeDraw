@@ -61,7 +61,7 @@ class TestView:UIView
 class ViewController: UIViewController
 {
     private var steps:NSArray!
-    private var index = 0
+    private var stepIndex = 0
     private var graph:GraphView!
 
     override func viewDidLoad()
@@ -75,7 +75,6 @@ class ViewController: UIViewController
             do
             {
                 steps = try NSJSONSerialization.JSONObjectWithData(data!, options: NSJSONReadingOptions.AllowFragments) as! NSArray
-                print((steps[0] as! NSArray)[1])
             }
             catch
             {
@@ -83,35 +82,51 @@ class ViewController: UIViewController
                 return
             }
             
-            index = 0
-            NSTimer.scheduledTimerWithTimeInterval(1.0/50, target: self, selector: "timeTickUpdate:", userInfo: nil, repeats: true)
+            stepIndex = 0
+//            NSTimer.scheduledTimerWithTimeInterval(1.0/50, target: self, selector: "timeTickUpdate:", userInfo: nil, repeats: true)
             
         }
         
-//        let testView = TestView(frame: view.frame)
-//        testView.backgroundColor = UIColor.clearColor()
+        let testView = TestView(frame: view.frame)
+        testView.backgroundColor = UIColor.clearColor()
 //        view.addSubview(testView)
         
         graph = GraphView(frame:view.frame);
         graph.backgroundColor = UIColor.clearColor()
         view.addSubview(graph)
+        
+        drawGraph()
+    }
+    
+    func drawGraph()
+    {
+        for i in 0..<steps.count
+        {
+            let data = steps[i] as! NSArray
+            let method = data.objectAtIndex(0) as! String
+            let params = data.objectAtIndex(1) as! NSDictionary
+            
+            graph.doStep(method, params: params)
+        }
+        
+        graph.setNeedsDisplay()
     }
     
     func timeTickUpdate(timer:NSTimer)
     {
-        if (index >= steps.count)
+        if (stepIndex >= steps.count)
         {
             timer.invalidate()
             return
         }
         
-        let data = steps[index] as! NSArray
+        let data = steps[stepIndex] as! NSArray
         let method = data.objectAtIndex(0) as! String
         let params = data.objectAtIndex(1) as! NSDictionary
         
         graph.doStep(method, params: params)
         
-        index++
+        stepIndex++
     }
 
     override func didReceiveMemoryWarning()

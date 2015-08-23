@@ -37,11 +37,16 @@ class GraphView:UIView
     private var queue:[(method:String, params:NSDictionary)] = []
     
     private var path:CGMutablePath!
+    private var style:NSDictionary!
+    
+    private var lineWidth:CGFloat = 1.0
+    private var lineCap = CGLineCap.Round
+    private var lineJoin = CGLineJoin.Round
+    private var miterLimit:CGFloat = 3.0
     
     func doStep(method:String, params:NSDictionary)
     {
         queue.append((method, params))
-        setNeedsDisplay()
     }
     
     func getGradientStyle(params:NSDictionary) -> GradientStyle
@@ -80,16 +85,21 @@ class GraphView:UIView
     
     func getCoord(params:NSDictionary, key:String) -> CGFloat
     {
-        let value = params.valueForKey(key) as! Double
-        return CGFloat(value)
+        if let data = getUnifyValue(params, key: key)
+        {
+            return CGFloat(data as! Double)
+            
+        }
+        
+        return 0.0
     }
     
     func getColor(params:NSDictionary, colorKey:String, alphaKey:String) -> UIColor
     {
         let rgbColor:Int
-        if params.valueForKey(colorKey) != nil
+        if let data = getUnifyValue(params, key: colorKey)
         {
-            rgbColor = params.valueForKey(colorKey) as! Int
+            rgbColor = data as! Int
         }
         else
         {
@@ -100,124 +110,249 @@ class GraphView:UIView
         let g = (rgbColor >> 08) & 0xFF
         let r = (rgbColor >> 16) & 0xFF
         
-        let a:Double
-        if params.valueForKey(alphaKey) != nil
+        let a:CGFloat
+        if let data = getUnifyValue(params, key: alphaKey)
         {
-            a = params.valueForKey(alphaKey) as! Double
+            a = CGFloat(data as! Double)
         }
         else
         {
             a = 1.0
         }
         
-        return UIColor(red: CGFloat(r)/0xFF, green: CGFloat(g)/0xFF, blue: CGFloat(b)/0xFF, alpha: CGFloat(a)/0xFF)
+        let color = UIColor(red: CGFloat(r)/0xFF, green: CGFloat(g)/0xFF, blue: CGFloat(b)/0xFF, alpha: a)
+        return color
     }
     
     override func drawRect(rect: CGRect)
     {
-        if queue.count == 0
+        let context = UIGraphicsGetCurrentContext()
+        
+        for i in 0..<queue.count
         {
-            return
+            let step = queue[i]
+            drawByStep(context, step: step)
         }
         
-        let context = UIGraphicsGetCurrentContext()
-        let step = queue.removeFirst()
-        
+        tryStrokeContextPath(context)
+    }
+    
+    func drawByStep(context:CGContext?, step:(method:String, params:NSDictionary))
+    {
         let params = step.params
-        
         switch step.method
         {
             case "LINE_STYLE":
-                CGContextRestoreGState(context)
-                CGContextSaveGState(context)
-               
+                tryStrokeContextPath(context)
+                
                 state = GraphicsState.SolidStroke
+                style = params
+                
+                path = CGPathCreateMutable()
+                print("// LINE STYLE -> NEW PATH")
             
             case "LINE_GRADIENT_STYLE":
-                CGContextRestoreGState(context)
-                CGContextSaveGState(context)
+                tryStrokeContextPath(context)
                 
                 state = GraphicsState.GradientStroke
-                setContextGradientStyle(context!, params: params)
+                style = params
+                
+                path = CGPathCreateMutable()
+                print("// LINE GRADIENT STYLE -> NEW PATH")
                 
             case "LINE_TO":
-                if GraphicsState.Stroke.contains(state)
-                {
-                    CGContextAddLineToPoint(context,
-                        getCoord(params, key: "x"), getCoord(params, key: "y"))
-                }
-                else
-                {
-                    CGPathAddLineToPoint(path, nil,
-                        getCoord(params, key: "x"), getCoord(params, key: "y"))
-                }
+                CGPathAddLineToPoint(path, nil,
+                    getCoord(params, key: "x"), getCoord(params, key: "y"))
+                print(String(format:"CGPathAddLineToPoint(path, nil, %6.2f, %6.2f)", getCoord(params, key: "x"), getCoord(params, key: "y")))
             
             case "MOVE_TO":
-                if GraphicsState.Stroke.contains(state)
-                {
-                    CGContextMoveToPoint(context,
-                        getCoord(params, key: "x"), getCoord(params, key: "y"))
-                }
-                else
-                {
-                    CGPathMoveToPoint(path, nil,
-                        getCoord(params, key: "x"), getCoord(params, key: "y"))
-                }
-                
+                CGPathMoveToPoint(path, nil,
+                    getCoord(params, key: "x"), getCoord(params, key: "y"))
+                print(String(format:"CGPathMoveToPoint(path, nil, %6.2f, %6.2f)", getCoord(params, key: "x"), getCoord(params, key: "y")))
+            
             case "CURVE_TO":
-                if GraphicsState.Stroke.contains(state)
-                {
-                    CGContextAddQuadCurveToPoint(context,
-                        getCoord(params, key: "controlX"), getCoord(params, key: "controlY"),
-                        getCoord(params, key: "anchorX"),  getCoord(params, key: "anchorY"))
-                }
-                else
-                {
-                    CGPathAddQuadCurveToPoint(path, nil,
-                        getCoord(params, key: "controlX"), getCoord(params, key: "controlY"),
-                        getCoord(params, key: "anchorX"),  getCoord(params, key: "anchorY"))
-                }
+                CGPathAddQuadCurveToPoint(path, nil,
+                    getCoord(params, key: "controlX"), getCoord(params, key: "controlY"),
+                    getCoord(params, key: "anchorX"),  getCoord(params, key: "anchorY"))
+                print(String(format:"CGPathAddQuadCurveToPoint(path, nil, %6.2f, %6.2f, %6.2f, %6.2f)",
+                    getCoord(params, key: "controlX"), getCoord(params, key: "controlY"),
+                    getCoord(params, key: "anchorX"),  getCoord(params, key: "anchorY")))
                 
             case "BEGIN_FILL":
-                CGContextRestoreGState(context)
-                CGContextSaveGState(context)
+                tryStrokeContextPath(context)
                 
-                CGContextSetFillColorWithColor(context, getColor(params, colorKey: "color", alphaKey: "alpha").CGColor)
+                state = GraphicsState.SolidFill
+                style = params
                 
                 path = CGPathCreateMutable()
-            
-                state = GraphicsState.SolidFill
+                print("// BEGIN FILL -> NEW PATH")
             
             case "BEGIN_GRADIENT_FILL":
-                CGContextRestoreGState(context)
-                CGContextSaveGState(context)
-                
-                path = CGPathCreateMutable()
+                tryStrokeContextPath(context)
                 
                 state = GraphicsState.GradientFill
-                setContextGradientStyle(context!, params: params)
+                style = params
+                
+                path = CGPathCreateMutable()
+                print("// BEGIN GRADIENT FILL -> NEW PATH")
             
             case "END_FILL":
-                CGContextAddPath(context, path)
-                CGContextFillPath(context)
+                if state == GraphicsState.GradientFill
+                {
+                    print("// END FILL GRADIENT")
+                    CGContextAddPath(context, path)
+                    CGContextClip(context)
+                    fillContextGradientStyle(context, params: style)
+                    style = nil
+                }
+                else
+                {
+                    print("// END FILL SOLID")
+                    CGContextAddPath(context, path)
+                    CGContextSetFillColorWithColor(context, getColor(style, colorKey: "color", alphaKey: "alpha").CGColor)
+                    CGContextFillPath(context)
+                }
                 
                 path = nil
-                CGContextRestoreGState(context)
                 
             default:break
         }
     }
     
-    func setContextGradientStyle(context:CGContext, params:NSDictionary)
+    func tryStrokeContextPath(context:CGContext?)
+    {
+        if path != nil && state != nil && GraphicsState.Stroke.contains(state)
+        {
+            if (state == GraphicsState.GradientStroke)
+            {
+                print("// STROKE GRADIENT")
+                strokePathWithGradientStyle(context, path: path)
+            }
+            else
+            {
+                print("// STROKE SOLID")
+                CGContextAddPath(context, path)
+                setContextLineSolidColorStyle(context, params: style)
+                CGContextStrokePath(context)
+            }
+            
+            path = nil
+        }
+    }
+    
+    func setContextLineSolidColorStyle(context:CGContext?, params:NSDictionary)
+    {
+        let r:Int, g:Int, b:Int
+        if let data = getUnifyValue(params, key: "color")
+        {
+            let rgbColor = data as! Int
+            b = (rgbColor >> 00) & 0xFF
+            g = (rgbColor >> 08) & 0xFF
+            r = (rgbColor >> 16) & 0xFF
+        }
+        else
+        {
+            r = 0; g = 0; b = 0
+        }
+        
+        var a:CGFloat = 1.0
+        if let data = getUnifyValue(params, key: "alpha")
+        {
+            a = CGFloat(data as! Double)
+        }
+        
+        let color = UIColor(red: CGFloat(r), green: CGFloat(g), blue: CGFloat(b), alpha: a)
+        CGContextSetStrokeColorWithColor(context, color.CGColor)
+        
+        if let data = getUnifyValue(params, key: "thickness")
+        {
+            lineWidth = CGFloat(data as! Double)
+        }
+        else
+        {
+            lineWidth = 0.0
+        }
+        
+        CGContextSetLineWidth(context, lineWidth)
+        
+        if let data = getUnifyValue(params, key: "caps")
+        {
+            let type = data as! String
+            switch type
+            {
+                case "square": lineCap = CGLineCap.Square
+                case "round": lineCap = CGLineCap.Round
+                default: lineCap = CGLineCap.Butt
+            }
+        }
+        else
+        {
+            lineCap = CGLineCap.Butt
+        }
+        
+        CGContextSetLineCap(context, lineCap)
+        
+        if let data = getUnifyValue(params, key: "joints")
+        {
+            let type = data as! String
+            switch type
+            {
+                case "bevel": lineJoin = CGLineJoin.Bevel
+                case "miter": lineJoin = CGLineJoin.Miter
+                case "round":fallthrough
+                default:lineJoin = CGLineJoin.Round
+            }
+        }
+        else
+        {
+            lineJoin = CGLineJoin.Round
+        }
+        
+        CGContextSetLineJoin(context, lineJoin)
+        
+        if let data = getUnifyValue(params, key: "miterLimit")
+        {
+            miterLimit = CGFloat(data as! Double)
+        }
+        else
+        {
+            miterLimit = 3.0
+        }
+        
+        CGContextSetMiterLimit(context, miterLimit)
+    }
+    
+    func getUnifyValue(params:NSDictionary, key:String) -> AnyObject?
+    {
+        let data = params.valueForKey(key)
+        if let data = data where data is NSNull
+        {
+            return nil
+        }
+        
+        return data
+    }
+    
+    func strokePathWithGradientStyle(context:CGContext?, path:CGMutablePath)
+    {
+        let gradientPath = CGPathCreateCopyByStrokingPath(path, nil, lineWidth, lineCap, lineJoin, miterLimit)
+        CGContextAddPath(context, gradientPath)
+        CGContextClip(context)
+        
+        fillContextGradientStyle(context, params: style)
+    }
+    
+    func fillContextGradientStyle(context:CGContext?, params:NSDictionary)
     {
         let style = getGradientStyle(params)
         let matrix = style.matrix
         
-        let angle = -atan2(matrix.c, matrix.a)
+        let angle = atan2(matrix.b, matrix.a)
         let scaleX = matrix.a / cos(angle)
-        let scaleY = matrix.b / sin(angle)
+        let scaleY = matrix.d / cos(angle)
         
         let width = scaleX * 1638.4, height = scaleY * 1638.4
+        print(angle / CGFloat(M_PI) * 180)
         
         if style.type == "radial"
         {
@@ -244,7 +379,5 @@ class GraphView:UIView
             
             CGContextDrawLinearGradient(context, style.gradient, startPoint, endPoint, CGGradientDrawingOptions(rawValue: 0))
         }
-        
-        CGContextFillPath(context)
     }
 }
