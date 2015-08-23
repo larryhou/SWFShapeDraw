@@ -62,6 +62,7 @@ class ViewController: UIViewController
 {
     private var steps:NSArray!
     private var index = 0
+    private var graph:GraphView!
 
     override func viewDidLoad()
     {
@@ -87,10 +88,13 @@ class ViewController: UIViewController
             
         }
         
-        let testView = TestView(frame: view.frame)
-        testView.backgroundColor = UIColor.clearColor()
-        view.addSubview(testView)
+//        let testView = TestView(frame: view.frame)
+//        testView.backgroundColor = UIColor.clearColor()
+//        view.addSubview(testView)
         
+        graph = GraphView(frame:view.frame);
+        graph.backgroundColor = UIColor.clearColor()
+        view.addSubview(graph)
     }
     
     func timeTickUpdate(timer:NSTimer)
@@ -104,20 +108,8 @@ class ViewController: UIViewController
         let data = steps[index] as! NSArray
         let method = data.objectAtIndex(0) as! String
         let params = data.objectAtIndex(1) as! NSDictionary
-        switch method
-        {
-            case "LINE_STYLE":break
-            case "LINE_GRADIENT_STYLE":break
-            case "LINE_TO":break
-            case "MOVE_TO":break
-            case "CURVE_TO":break
-            case "BEGIN_FILL":break
-            case "BEGIN_GRADIENT_FILL":break
-            case "END_FILL":break
-            default:break
-        }
         
-        print(params.valueForKey("caps"))
+        graph.doStep(method, params: params)
         
         index++
     }
