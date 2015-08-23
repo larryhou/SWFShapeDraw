@@ -232,8 +232,10 @@ class GraphView:UIView
             {
                 print("// STROKE SOLID")
                 CGContextAddPath(context, path)
+                print("CGContextAddPath(context, path)")
                 setContextLineSolidColorStyle(context, params: style)
                 CGContextStrokePath(context)
+                print("CGContextStrokePath(context)")
             }
             
             path = nil
@@ -261,8 +263,9 @@ class GraphView:UIView
             a = CGFloat(data as! Double)
         }
         
-        let color = UIColor(red: CGFloat(r), green: CGFloat(g), blue: CGFloat(b), alpha: a)
+        let color = UIColor(red: CGFloat(r)/0xFF, green: CGFloat(g)/0xFF, blue: CGFloat(b)/0xFF, alpha: a)
         CGContextSetStrokeColorWithColor(context, color.CGColor)
+        print(String(format: "CGContextSetStrokeColorWithColor(context, UIColor(red:%.2f, green:%.2f, blue:%.2f, alpha:%.2f).CGColor)", CGFloat(r)/0xFF, CGFloat(g)/0xFF, CGFloat(b)/0xFF, a))
         
         if let data = getUnifyValue(params, key: "thickness")
         {
@@ -274,6 +277,7 @@ class GraphView:UIView
         }
         
         CGContextSetLineWidth(context, lineWidth)
+        print(String(format: "CGContextSetLineWidth(context, %.1f)", lineWidth))
         
         if let data = getUnifyValue(params, key: "caps")
         {
@@ -291,6 +295,7 @@ class GraphView:UIView
         }
         
         CGContextSetLineCap(context, lineCap)
+        print(String(format: "CGContextSetLineCap(context, CGLineCap(rawValue:%d)!)", lineCap.rawValue))
         
         if let data = getUnifyValue(params, key: "joints")
         {
@@ -309,6 +314,7 @@ class GraphView:UIView
         }
         
         CGContextSetLineJoin(context, lineJoin)
+        print(String(format: "CGContextSetLineJoin(context, CGLineJoin(rawValue:%d)!)", lineJoin.rawValue))
         
         if let data = getUnifyValue(params, key: "miterLimit")
         {
@@ -320,6 +326,7 @@ class GraphView:UIView
         }
         
         CGContextSetMiterLimit(context, miterLimit)
+        print(String(format: "CGContextSetMiterLimit(context, %.1f)", miterLimit))
     }
     
     func getUnifyValue(params:NSDictionary, key:String) -> AnyObject?

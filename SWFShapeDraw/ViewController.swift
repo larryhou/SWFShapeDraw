@@ -91,7 +91,11 @@ class ViewController: UIViewController
         testView.backgroundColor = UIColor.clearColor()
 //        view.addSubview(testView)
         
-        graph = GraphView(frame:view.frame);
+        var frame = view.frame
+        frame.origin.x = frame.width / 2
+        frame.origin.y = frame.height / 2
+        
+        graph = GraphView(frame:frame);
         graph.backgroundColor = UIColor.clearColor()
         view.addSubview(graph)
         
