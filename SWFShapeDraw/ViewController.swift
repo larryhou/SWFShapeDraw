@@ -94,6 +94,7 @@ class ViewController: UIViewController
         var frame = view.frame
         frame.origin.x = frame.width / 2
         frame.origin.y = frame.height / 2
+        frame = view.frame
         
         graph = GraphView(frame:frame);
         graph.backgroundColor = UIColor.clearColor()
