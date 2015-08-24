@@ -97,7 +97,7 @@ class ViewController: UIViewController
         frame = view.frame
         
         shape = VectorShapeView(frame:frame);
-        shape.backgroundColor = UIColor.clearColor()
+        shape.backgroundColor = UIColor(white: 0.9, alpha: 1.0)
         view.addSubview(shape)
         
         setupShape()

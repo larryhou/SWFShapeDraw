@@ -427,8 +427,8 @@ class VectorShapeView:UIView
                                          height / 2 * sin(angle) * style.focalPointRatio + matrix.ty)
             let endCenter = CGPointMake(matrix.tx, matrix.ty)
             
-            CGContextDrawRadialGradient(context, style.gradient, startCenter, 0, endCenter, endRadius, CGGradientDrawingOptions(rawValue: 0))
-            print(String(format: "CGContextDrawRadialGradient(context, gradient, CGPointMake(%.1f, %.1f), 0, CGPointMake(%.1f, %.1f), %.1f, CGGradientDrawingOptions(rawValue: 0))",
+            CGContextDrawRadialGradient(context, style.gradient, startCenter, 0, endCenter, endRadius, CGGradientDrawingOptions.DrawsAfterEndLocation)
+            print(String(format: "CGContextDrawRadialGradient(context, gradient, CGPointMake(%.1f, %.1f), 0, CGPointMake(%.1f, %.1f), %.1f, CGGradientDrawingOptions.DrawsAfterEndLocation)",
                 startCenter.x, startCenter.y, endCenter.x, endCenter.y, endRadius))
         }
         else
