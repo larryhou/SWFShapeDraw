@@ -62,7 +62,7 @@ class ViewController: UIViewController
 {
     private var steps:NSArray!
     private var stepIndex = 0
-    private var graph:GraphView!
+    private var shape:VectorShapeView!
 
     override func viewDidLoad()
     {
@@ -96,14 +96,45 @@ class ViewController: UIViewController
         frame.origin.y = frame.height / 2
         frame = view.frame
         
-        graph = GraphView(frame:frame);
-        graph.backgroundColor = UIColor.clearColor()
-        view.addSubview(graph)
+        shape = VectorShapeView(frame:frame);
+        shape.backgroundColor = UIColor.clearColor()
+        view.addSubview(shape)
         
-        drawGraph()
+        setupShape()
+        drawShape()
     }
     
-    func drawGraph()
+    func setupShape()
+    {
+        var bounds:(left:CGFloat, top:CGFloat, right:CGFloat, bottom:CGFloat) = (0,0,0,0)
+        for i in 0..<steps.count
+        {
+            let data = steps[i] as! NSArray
+            let method = data.objectAtIndex(0) as! String
+            let params = data.objectAtIndex(1) as! NSDictionary
+            
+            var x:CGFloat = 0.0, y:CGFloat = 0.0
+            switch method
+            {
+                case "MOVE_TO", "LINE_TO":
+                    x = CGFloat(params.valueForKey("x") as! Double)
+                    y = CGFloat(params.valueForKey("y") as! Double)
+                case "CURVE_TO":
+                    x = CGFloat(params.valueForKey("anchorX") as! Double)
+                    y = CGFloat(params.valueForKey("anchorY") as! Double)
+                default:break
+            }
+            
+            bounds.left   = min(x, bounds.left)
+            bounds.right  = max(x, bounds.right)
+            bounds.top    = min(y, bounds.top)
+            bounds.bottom = max(y, bounds.bottom)
+        }
+        
+        shape.irect = CGRectMake(bounds.left, bounds.top, bounds.right - bounds.left, bounds.bottom - bounds.top)
+    }
+    
+    func drawShape()
     {
         for i in 0..<steps.count
         {
@@ -111,10 +142,10 @@ class ViewController: UIViewController
             let method = data.objectAtIndex(0) as! String
             let params = data.objectAtIndex(1) as! NSDictionary
             
-            graph.doStep(method, params: params)
+            shape.doStep(method, params: params)
         }
         
-        graph.setNeedsDisplay()
+        shape.setNeedsDisplay()
     }
     
     func timeTickUpdate(timer:NSTimer)
@@ -129,7 +160,7 @@ class ViewController: UIViewController
         let method = data.objectAtIndex(0) as! String
         let params = data.objectAtIndex(1) as! NSDictionary
         
-        graph.doStep(method, params: params)
+        shape.doStep(method, params: params)
         
         stepIndex++
     }

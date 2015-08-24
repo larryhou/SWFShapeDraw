@@ -9,7 +9,7 @@
 import Foundation
 import UIKit
 
-class GraphView:UIView
+class VectorShapeView:UIView
 {
     struct GraphicsState:OptionSetType
     {
@@ -25,7 +25,7 @@ class GraphView:UIView
         static let Fill:GraphicsState   = [GraphicsState.SolidFill,   GraphicsState.GradientFill]
     }
     
-    struct GradientStyle
+    struct GradientStyleInfo
     {
         var type:String
         var gradient:CGGradient
@@ -44,6 +44,7 @@ class GraphView:UIView
     private var lineJoin = CGLineJoin.Round
     private var miterLimit:CGFloat = 3.0
     
+    var irect:CGRect!
     func doStep(method:String, params:NSDictionary)
     {
         queue.append((method, params))
@@ -56,7 +57,7 @@ class GraphView:UIView
         return String(format: "UIColor(red:%.2f, green:%.2f, blue:%.2f, alpha:%.2f)", r, g, b, a)
     }
     
-    func getGradientStyle(params:NSDictionary) -> GradientStyle
+    func getGradientStyle(params:NSDictionary) -> GradientStyleInfo
     {
         let type = params.valueForKey("type") as! String
         let colors = params.valueForKey("colors") as! [Int]
@@ -78,10 +79,9 @@ class GraphView:UIView
         
         let gradient = CGGradientCreateWithColors(CGColorSpaceCreateDeviceRGB(), rgbaColors.map({$0.CGColor}), &locations)
         
-        let colorsCode = "[" + ",".join(rgbaColors.map({ getUIColorCode($0) + ".CGColor" })) + "]"
+        print("colors = [" + ",".join(rgbaColors.map({ getUIColorCode($0) + ".CGColor" })) + "]")
         print("locations = [" + ",".join(locations.map({String(format:"%.4f", $0)})) + "]")
-        print(String(format: "gradient = CGGradientCreateWithColors(CGColorSpaceCreateDeviceRGB(), %@, &locations)",
-            colorsCode))
+        print("gradient = CGGradientCreateWithColors(CGColorSpaceCreateDeviceRGB(), colors, &locations)")
         
         var matrix:(a:CGFloat, b:CGFloat, c:CGFloat, d:CGFloat, tx:CGFloat, ty:CGFloat) = (0,0,0,0,0,0)
         matrix.a = CGFloat(params.valueForKeyPath("matrix.a") as! Double)
@@ -92,7 +92,7 @@ class GraphView:UIView
         matrix.ty = CGFloat(params.valueForKeyPath("matrix.ty") as! Double)
         
         let focalPointRatio = CGFloat(params.valueForKey("focalPointRatio") as! Double)
-        return GradientStyle(type: type, gradient: gradient!, matrix: matrix, focalPointRatio: focalPointRatio)
+        return GradientStyleInfo(type: type, gradient: gradient!, matrix: matrix, focalPointRatio: focalPointRatio)
     }
     
     func getCoord(params:NSDictionary, key:String) -> CGFloat
@@ -140,6 +140,22 @@ class GraphView:UIView
     {
         let context = UIGraphicsGetCurrentContext()
         print("let context = UIGraphicsGetCurrentContext()")
+        print("var gradient:CGGradient!")
+        print("var path:CGMutablePath!")
+        print("var locations:[CGFloat]")
+        print("var colors:[CGColor]")
+        print("")
+        
+        CGContextTranslateCTM(context, -irect.origin.x + (bounds.width - irect.width) / 2,
+                                       -irect.origin.y + (bounds.height - irect.height) / 2)
+        print(String(format: "CGContextTranslateCTM(context, %6.2f, %6.2f)",
+            -irect.origin.x + (bounds.width - irect.width) / 2,
+            -irect.origin.y + (bounds.height - irect.height) / 2))
+        
+        let margin:CGFloat = 40.0
+        let scale:CGFloat = min((rect.width - margin) / irect.width, (rect.height - margin) / irect.height)
+        CGContextScaleCTM(context, scale, scale)
+        print(String(format: "CGContextScaleCTM(context, %.4f, %.4f)", scale, scale))
         print("")
         
         for i in 0..<queue.count
@@ -162,7 +178,7 @@ class GraphView:UIView
                 state = GraphicsState.SolidStroke
                 style = params
                 
-                print("// LINE STYLE")
+                print("// BEGIN-SOLID-STROKE")
                 
                 path = CGPathCreateMutable()
                 print("path = CGPathCreateMutable()")
@@ -173,7 +189,7 @@ class GraphView:UIView
                 state = GraphicsState.GradientStroke
                 style = params
                 
-                print("// LINE GRADIENT STYLE")
+                print("// BEGIN-GRADIENT-STROKE")
                 
                 path = CGPathCreateMutable()
                 print("path = CGPathCreateMutable()")
@@ -202,7 +218,7 @@ class GraphView:UIView
                 state = GraphicsState.SolidFill
                 style = params
                 
-                print("// BEGIN FILL")
+                print("// BEGIN-SOLID-FILL")
                 
                 path = CGPathCreateMutable()
                 print("path = CGPathCreateMutable()")
@@ -213,7 +229,7 @@ class GraphView:UIView
                 state = GraphicsState.GradientFill
                 style = params
                 
-                print("// BEGIN GRADIENT FILL")
+                print("// BEGIN-GRADIENT-FILL")
                 
                 path = CGPathCreateMutable()
                 print("path = CGPathCreateMutable()")
@@ -221,12 +237,16 @@ class GraphView:UIView
             case "END_FILL":
                 if state == GraphicsState.GradientFill
                 {
+                    CGContextSaveGState(context)
+                    print("CGContextSaveGState(context)")
                     CGContextAddPath(context, path)
                     print("CGContextAddPath(context, path)")
                     CGContextClip(context)
                     print("CGContextClip(context)")
                     fillContextGradientStyle(context, params: style)
-                    print("// END FILL GRADIENT")
+                    CGContextRestoreGState(context)
+                    print("CGContextRestoreGState(context)")
+                    print("// END-GRADIENT-FILL")
                 }
                 else
                 {
@@ -237,11 +257,11 @@ class GraphView:UIView
                     print(String(format: "CGContextSetFillColorWithColor(context, %@.CGColor)", getUIColorCode(color)))
                     CGContextFillPath(context)
                     print("CGContextFillPath(context)")
-                    print("// END FILL SOLID")
+                    print("// END-SOLID-FILL")
                 }
                 
+                print("")
                 path = nil
-                print("path = nil")
             
             default:break
         }
@@ -253,21 +273,24 @@ class GraphView:UIView
         {
             if (state == GraphicsState.GradientStroke)
             {
-                print("// STROKE GRADIENT COLOR")
+                CGContextSaveGState(context)
+                print("CGContextSaveGState(context)")
                 strokePathWithGradientStyle(context, path: path)
+                CGContextRestoreGState(context)
+                print("CGContextRestoreGState(context)")
+                print("// END-GRADIENT-STROKE")
             }
             else
             {
-                print("// STROKE SOLID COLOR")
                 CGContextAddPath(context, path)
                 print("CGContextAddPath(context, path)")
                 setContextLineSolidColorStyle(context, params: style)
                 CGContextStrokePath(context)
                 print("CGContextStrokePath(context)")
+                print("// END-SOLID-STROKE")
             }
-            
+            print("")
             path = nil
-            print("path = nil")
         }
     }
     
