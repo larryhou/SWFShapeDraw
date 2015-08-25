@@ -142,7 +142,7 @@ class ViewController: UIViewController
         shape.irect = CGRectMake(bounds.left, bounds.top, bounds.right - bounds.left, bounds.bottom - bounds.top)
         shape.importSteps(list)
         
-        NSTimer.scheduledTimerWithTimeInterval(1.0 / 24, target: self, selector: "timeTickUpdate:", userInfo: nil, repeats: true)
+        NSTimer.scheduledTimerWithTimeInterval(1.0 / 25, target: self, selector: "timeTickUpdate:", userInfo: nil, repeats: true)
     }
     
     func timeTickUpdate(timer:NSTimer)
