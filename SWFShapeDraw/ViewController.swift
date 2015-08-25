@@ -9,13 +9,19 @@
 import UIKit
 import Foundation
 
-class ViewController: UIViewController
+class ViewController: UIViewController, UIScrollViewDelegate
 {
     private var shape:RedrawView!
+    private var pinch:UIPinchGestureRecognizer!
 
     override func viewDidLoad()
     {
         super.viewDidLoad()
+        let view = self.view as! UIScrollView
+        view.backgroundColor = UIColor(white: 0.9, alpha: 1.0)
+        view.delegate = self
+        view.maximumZoomScale = 2.0
+        view.minimumZoomScale = 1.0
         
         var steps:NSArray!
         let jurl = NSBundle.mainBundle().URLForResource("graph", withExtension: "json")
@@ -35,7 +41,8 @@ class ViewController: UIViewController
         }
         
         shape = RedrawView(frame:view.frame);
-        shape.backgroundColor = UIColor(white: 0.9, alpha: 1.0)
+        shape.backgroundColor = UIColor.clearColor()
+        shape.center = CGPoint(x: CGRectGetMidX(shape.bounds), y: CGRectGetMidY(shape.bounds))
         view.addSubview(shape)
         
         drawShape(steps)
@@ -97,6 +104,12 @@ class ViewController: UIViewController
         {
             timer.invalidate()
         }
+    }
+    
+    //MARK: zoom
+    func viewForZoomingInScrollView(scrollView: UIScrollView) -> UIView?
+    {
+        return shape
     }
 
     override func didReceiveMemoryWarning()
