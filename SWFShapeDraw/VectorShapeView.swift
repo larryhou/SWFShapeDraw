@@ -25,6 +25,41 @@ class VectorShapeView:UIView
         static let Fill:GraphicsState   = [GraphicsState.SolidFill,   GraphicsState.GradientFill]
     }
     
+    struct DrawAction:OptionSetType
+    {
+        let rawValue:Int
+        init(rawValue:Int) { self.rawValue = rawValue }
+        
+        static let LineStyle         = DrawAction(rawValue: 1 << 0)
+        static let LineGradientStyle = DrawAction(rawValue: 1 << 1)
+        static let BeginFill         = DrawAction(rawValue: 1 << 2)
+        static let BeginGradientFill = DrawAction(rawValue: 1 << 3)
+        static let EndFill           = DrawAction(rawValue: 1 << 4)
+        static let MoveTo            = DrawAction(rawValue: 1 << 5)
+        static let LineTo            = DrawAction(rawValue: 1 << 6)
+        static let CurveTo           = DrawAction(rawValue: 1 << 7)
+        
+        static let ChangeLineStyle:DrawAction = [DrawAction.LineStyle, DrawAction.LineGradientStyle]
+        static let ChangeFillStyle:DrawAction = [DrawAction.BeginFill, DrawAction.BeginGradientFill]
+        static let ChangeStyle:DrawAction = [DrawAction.ChangeLineStyle, DrawAction.ChangeFillStyle]
+        
+        static func from(method:String) -> DrawAction?
+        {
+            switch method
+            {
+                case "MOVE_TO"              :return DrawAction.MoveTo
+                case "LINE_TO"              :return DrawAction.LineTo
+                case "CURVE_TO"             :return DrawAction.CurveTo
+                case "LINE_STYLE"           :return DrawAction.LineStyle
+                case "LINE_GRADIENT_STYLE"  :return DrawAction.LineGradientStyle
+                case "BEGIN_FILL"           :return DrawAction.BeginFill
+                case "BEGIN_GRADIENT_FILL"  :return DrawAction.BeginGradientFill
+                case "END_FILL"             :return DrawAction.EndFill
+                default:return nil
+            }
+        }
+    }
+    
     struct GradientStyleInfo
     {
         var type:String
@@ -45,6 +80,8 @@ class VectorShapeView:UIView
     private var miterLimit:CGFloat = 3.0
     
     var irect:CGRect!
+    dynamic var flushAvailable:Bool = false
+    
     func doStep(method:String, params:NSDictionary)
     {
         queue.append((method, params))
@@ -164,10 +201,18 @@ class VectorShapeView:UIView
         for i in 0..<queue.count
         {
             let step = queue[i]
+//            if let action = DrawAction.from(step.method)
+//            {
+//                if DrawAction.ChangeStyle.contains(action) || action == DrawAction.EndFill
+//                {
+//                    flushCurrentContext(context)
+//                }
+//            }
+            
             drawByStep(context, step: step)
         }
         
-        tryStrokeContextPath(context)
+        flushCurrentContext(context)
         
         CGContextRestoreGState(context)
         print("CGContextRestoreGState(context)")
@@ -179,7 +224,7 @@ class VectorShapeView:UIView
         switch step.method
         {
             case "LINE_STYLE":
-                tryStrokeContextPath(context)
+                flushCurrentContext(context)
                 
                 state = GraphicsState.SolidStroke
                 style = params
@@ -190,7 +235,7 @@ class VectorShapeView:UIView
                 print("path = CGPathCreateMutable()")
             
             case "LINE_GRADIENT_STYLE":
-                tryStrokeContextPath(context)
+                flushCurrentContext(context)
                 
                 state = GraphicsState.GradientStroke
                 style = params
@@ -219,7 +264,7 @@ class VectorShapeView:UIView
                     getCoord(params, key: "anchorX"),  getCoord(params, key: "anchorY")))
                 
             case "BEGIN_FILL":
-                tryStrokeContextPath(context)
+                flushCurrentContext(context)
                 
                 state = GraphicsState.SolidFill
                 style = params
@@ -230,7 +275,7 @@ class VectorShapeView:UIView
                 print("path = CGPathCreateMutable()")
             
             case "BEGIN_GRADIENT_FILL":
-                tryStrokeContextPath(context)
+                flushCurrentContext(context)
                 
                 state = GraphicsState.GradientFill
                 style = params
@@ -241,41 +286,48 @@ class VectorShapeView:UIView
                 print("path = CGPathCreateMutable()")
             
             case "END_FILL":
-                if state == GraphicsState.GradientFill
-                {
-                    CGContextSaveGState(context)
-                    print("CGContextSaveGState(context)")
-                    CGContextAddPath(context, path)
-                    print("CGContextAddPath(context, path)")
-                    CGContextClip(context)
-                    print("CGContextClip(context)")
-                    fillContextGradientStyle(context, params: style)
-                    CGContextRestoreGState(context)
-                    print("CGContextRestoreGState(context)")
-                    print("// END-GRADIENT-FILL")
-                }
-                else
-                {
-                    CGContextAddPath(context, path)
-                    print("CGContextAddPath(context, path)")
-                    let color = getColor(style, colorKey: "color", alphaKey: "alpha")
-                    CGContextSetFillColorWithColor(context, color.CGColor)
-                    print(String(format: "CGContextSetFillColorWithColor(context, %@.CGColor)", getUIColorCode(color)))
-                    CGContextFillPath(context)
-                    print("CGContextFillPath(context)")
-                    print("// END-SOLID-FILL")
-                }
-                
-                print("")
-                path = nil
+                flushCurrentContext(context)
             
             default:break
         }
     }
     
-    func tryStrokeContextPath(context:CGContext?)
+    func flushCurrentContext(context:CGContext?)
     {
-        if path != nil && state != nil && GraphicsState.Stroke.contains(state)
+        if state == nil || path == nil
+        {
+            return
+        }
+        
+        if GraphicsState.Fill.contains(state)
+        {
+            if state == GraphicsState.GradientFill
+            {
+                CGContextSaveGState(context)
+                print("CGContextSaveGState(context)")
+                CGContextAddPath(context, path)
+                print("CGContextAddPath(context, path)")
+                CGContextClip(context)
+                print("CGContextClip(context)")
+                fillContextGradientStyle(context, params: style)
+                CGContextRestoreGState(context)
+                print("CGContextRestoreGState(context)")
+                print("// END-GRADIENT-FILL")
+            }
+            else
+            {
+                CGContextAddPath(context, path)
+                print("CGContextAddPath(context, path)")
+                let color = getColor(style, colorKey: "color", alphaKey: "alpha")
+                CGContextSetFillColorWithColor(context, color.CGColor)
+                print(String(format: "CGContextSetFillColorWithColor(context, %@.CGColor)", getUIColorCode(color)))
+                CGContextFillPath(context)
+                print("CGContextFillPath(context)")
+                print("// END-SOLID-FILL")
+            }
+        }
+        else
+        if GraphicsState.Stroke.contains(state)
         {
             if (state == GraphicsState.GradientStroke)
             {
@@ -295,9 +347,10 @@ class VectorShapeView:UIView
                 print("CGContextStrokePath(context)")
                 print("// END-SOLID-STROKE")
             }
-            print("")
-            path = nil
         }
+        
+        print("")
+        path = nil
     }
     
     func setContextLineSolidColorStyle(context:CGContext?, params:NSDictionary)
