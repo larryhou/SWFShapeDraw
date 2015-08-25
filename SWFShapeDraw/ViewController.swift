@@ -11,7 +11,7 @@ import Foundation
 
 class ViewController: UIViewController
 {
-    private var shape:VectorShapeView!
+    private var shape:RedrawView!
 
     override func viewDidLoad()
     {
@@ -34,7 +34,7 @@ class ViewController: UIViewController
             }
         }
         
-        shape = VectorShapeView(frame:view.frame);
+        shape = RedrawView(frame:view.frame);
         shape.backgroundColor = UIColor(white: 0.9, alpha: 1.0)
         view.addSubview(shape)
         

@@ -9,7 +9,7 @@
 import Foundation
 import UIKit
 
-class VectorShapeView:UIView
+class RedrawView:UIView
 {
     struct GraphicsState:OptionSetType
     {
