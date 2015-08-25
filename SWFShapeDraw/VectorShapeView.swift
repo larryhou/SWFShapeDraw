@@ -83,6 +83,15 @@ class VectorShapeView:UIView
     
     var currentIndex:Int = 0
     var stepsAvaiable:Bool { return currentIndex < steps.count }
+    var codeAvailable:Bool = false
+    
+    func printCode(value:String)
+    {
+        if codeAvailable
+        {
+            print(value)
+        }
+    }
     
     func importSteps(data:[(method:String, params:NSDictionary)])
     {
@@ -119,9 +128,9 @@ class VectorShapeView:UIView
         
         let gradient = CGGradientCreateWithColors(CGColorSpaceCreateDeviceRGB(), rgbaColors.map({$0.CGColor}), &locations)
         
-        print("colors = [" + ",".join(rgbaColors.map({ getUIColorCode($0) + ".CGColor" })) + "]")
-        print("locations = [" + ",".join(locations.map({String(format:"%.4f", $0)})) + "]")
-        print("gradient = CGGradientCreateWithColors(CGColorSpaceCreateDeviceRGB(), colors, &locations)")
+        printCode("colors = [" + ",".join(rgbaColors.map({ getUIColorCode($0) + ".CGColor" })) + "]")
+        printCode("locations = [" + ",".join(locations.map({String(format:"%.4f", $0)})) + "]")
+        printCode("gradient = CGGradientCreateWithColors(CGColorSpaceCreateDeviceRGB(), colors, &locations)")
         
         var matrix:(a:CGFloat, b:CGFloat, c:CGFloat, d:CGFloat, tx:CGFloat, ty:CGFloat) = (0,0,0,0,0,0)
         matrix.a = CGFloat(params.valueForKeyPath("matrix.a") as! Double)
@@ -178,34 +187,10 @@ class VectorShapeView:UIView
     
     override func drawRect(rect: CGRect)
     {
-        let context = UIGraphicsGetCurrentContext()
-
-        print("let context = UIGraphicsGetCurrentContext()")
-        print("var gradient:CGGradient!")
-        print("var path:CGMutablePath!")
-        print("var locations:[CGFloat]")
-        print("var colors:[CGColor]")
-        print("")
-        
-        CGContextSaveGState(context)
-        print("CGContextSaveGState(context)")
-    
-        let margin:CGFloat = 40.0
-        let scale:CGFloat = min((rect.width - margin) / irect.width, (rect.height - margin) / irect.height)
-        CGContextScaleCTM(context, scale, scale)
-        print(String(format: "CGContextScaleCTM(context, %.4f, %.4f)", scale, scale))
-        
-        let translateX:CGFloat = -(irect.origin.x + irect.width  / 2) + rect.width  / 2 / scale
-        let translateY:CGFloat = -(irect.origin.y + irect.height / 2) + rect.height / 2 / scale
-        CGContextTranslateCTM(context, translateX, translateY)
-        print(String(format: "CGContextTranslateCTM(context, %6.2f, %6.2f)", translateX, translateY))
-        print("")
-        
         var index = currentIndex
         while index < steps.count
         {
             let step = steps[index]
-            print(step.method)
             if let action = DrawAction.from(step.method)
             {
                 if DrawAction.ChangeStyle.contains(action) || action == DrawAction.EndFill
@@ -221,6 +206,36 @@ class VectorShapeView:UIView
         }
         
         currentIndex = min(index, steps.count)
+        
+        codeAvailable = false
+        if currentIndex == steps.count
+        {
+            codeAvailable = true
+        }
+        
+        let context = UIGraphicsGetCurrentContext()
+        
+        printCode("let context = UIGraphicsGetCurrentContext()")
+        printCode("var gradient:CGGradient!")
+        printCode("var path:CGMutablePath!")
+        printCode("var locations:[CGFloat]")
+        printCode("var colors:[CGColor]")
+        printCode("")
+        
+        CGContextSaveGState(context)
+        printCode("CGContextSaveGState(context)")
+        
+        let margin:CGFloat = 40.0
+        let scale:CGFloat = min((rect.width - margin) / irect.width, (rect.height - margin) / irect.height)
+        CGContextScaleCTM(context, scale, scale)
+        printCode(String(format: "CGContextScaleCTM(context, %.4f, %.4f)", scale, scale))
+        
+        let translateX:CGFloat = -(irect.origin.x + irect.width  / 2) + rect.width  / 2 / scale
+        let translateY:CGFloat = -(irect.origin.y + irect.height / 2) + rect.height / 2 / scale
+        CGContextTranslateCTM(context, translateX, translateY)
+        printCode(String(format: "CGContextTranslateCTM(context, %6.2f, %6.2f)", translateX, translateY))
+        printCode("")
+        
         for i in 0..<currentIndex
         {
             let step = steps[i]
@@ -238,6 +253,7 @@ class VectorShapeView:UIView
         flushCurrentContext(context)
         
         CGContextRestoreGState(context)
+        printCode("CGContextRestoreGState(context)")
     }
     
     func drawStep(context:CGContext?, step:(method:String, params:NSDictionary))
@@ -249,35 +265,35 @@ class VectorShapeView:UIView
                 state = GraphicsState.SolidStroke
                 style = params
                 
-                print("// BEGIN-SOLID-STROKE")
+                printCode("// BEGIN-SOLID-STROKE")
                 
                 path = CGPathCreateMutable()
-                print("path = CGPathCreateMutable()")
+                printCode("path = CGPathCreateMutable()")
             
             case "LINE_GRADIENT_STYLE":
                 state = GraphicsState.GradientStroke
                 style = params
                 
-                print("// BEGIN-GRADIENT-STROKE")
+                printCode("// BEGIN-GRADIENT-STROKE")
                 
                 path = CGPathCreateMutable()
-                print("path = CGPathCreateMutable()")
+                printCode("path = CGPathCreateMutable()")
             
             case "LINE_TO":
                 CGPathAddLineToPoint(path, nil,
                     getCoord(params, key: "x"), getCoord(params, key: "y"))
-                print(String(format:"CGPathAddLineToPoint(path, nil, %6.2f, %6.2f)", getCoord(params, key: "x"), getCoord(params, key: "y")))
+                printCode(String(format:"CGPathAddLineToPoint(path, nil, %6.2f, %6.2f)", getCoord(params, key: "x"), getCoord(params, key: "y")))
             
             case "MOVE_TO":
                 CGPathMoveToPoint(path, nil,
                     getCoord(params, key: "x"), getCoord(params, key: "y"))
-                print(String(format:"CGPathMoveToPoint(path, nil, %6.2f, %6.2f)", getCoord(params, key: "x"), getCoord(params, key: "y")))
+                printCode(String(format:"CGPathMoveToPoint(path, nil, %6.2f, %6.2f)", getCoord(params, key: "x"), getCoord(params, key: "y")))
             
             case "CURVE_TO":
                 CGPathAddQuadCurveToPoint(path, nil,
                     getCoord(params, key: "controlX"), getCoord(params, key: "controlY"),
                     getCoord(params, key: "anchorX"),  getCoord(params, key: "anchorY"))
-                print(String(format:"CGPathAddQuadCurveToPoint(path, nil, %6.2f, %6.2f, %6.2f, %6.2f)",
+                printCode(String(format:"CGPathAddQuadCurveToPoint(path, nil, %6.2f, %6.2f, %6.2f, %6.2f)",
                     getCoord(params, key: "controlX"), getCoord(params, key: "controlY"),
                     getCoord(params, key: "anchorX"),  getCoord(params, key: "anchorY")))
                 
@@ -285,19 +301,19 @@ class VectorShapeView:UIView
                 state = GraphicsState.SolidFill
                 style = params
                 
-                print("// BEGIN-SOLID-FILL")
+                printCode("// BEGIN-SOLID-FILL")
                 
                 path = CGPathCreateMutable()
-                print("path = CGPathCreateMutable()")
+                printCode("path = CGPathCreateMutable()")
             
             case "BEGIN_GRADIENT_FILL":
                 state = GraphicsState.GradientFill
                 style = params
                 
-                print("// BEGIN-GRADIENT-FILL")
+                printCode("// BEGIN-GRADIENT-FILL")
                 
                 path = CGPathCreateMutable()
-                print("path = CGPathCreateMutable()")
+                printCode("path = CGPathCreateMutable()")
             
             case "END_FILL":break
             default:break
@@ -316,26 +332,26 @@ class VectorShapeView:UIView
             if state == GraphicsState.GradientFill
             {
                 CGContextSaveGState(context)
-                print("CGContextSaveGState(context)")
+                printCode("CGContextSaveGState(context)")
                 CGContextAddPath(context, path)
-                print("CGContextAddPath(context, path)")
+                printCode("CGContextAddPath(context, path)")
                 CGContextClip(context)
-                print("CGContextClip(context)")
+                printCode("CGContextClip(context)")
                 fillContextGradientStyle(context, params: style)
                 CGContextRestoreGState(context)
-                print("CGContextRestoreGState(context)")
-                print("// END-GRADIENT-FILL")
+                printCode("CGContextRestoreGState(context)")
+                printCode("// END-GRADIENT-FILL")
             }
             else
             {
                 CGContextAddPath(context, path)
-                print("CGContextAddPath(context, path)")
+                printCode("CGContextAddPath(context, path)")
                 let color = getColor(style, colorKey: "color", alphaKey: "alpha")
                 CGContextSetFillColorWithColor(context, color.CGColor)
-                print(String(format: "CGContextSetFillColorWithColor(context, %@.CGColor)", getUIColorCode(color)))
+                printCode(String(format: "CGContextSetFillColorWithColor(context, %@.CGColor)", getUIColorCode(color)))
                 CGContextFillPath(context)
-                print("CGContextFillPath(context)")
-                print("// END-SOLID-FILL")
+                printCode("CGContextFillPath(context)")
+                printCode("// END-SOLID-FILL")
             }
         }
         else
@@ -344,24 +360,24 @@ class VectorShapeView:UIView
             if (state == GraphicsState.GradientStroke)
             {
                 CGContextSaveGState(context)
-                print("CGContextSaveGState(context)")
+                printCode("CGContextSaveGState(context)")
                 strokePathWithGradientStyle(context, path: path)
                 CGContextRestoreGState(context)
-                print("CGContextRestoreGState(context)")
-                print("// END-GRADIENT-STROKE")
+                printCode("CGContextRestoreGState(context)")
+                printCode("// END-GRADIENT-STROKE")
             }
             else
             {
                 CGContextAddPath(context, path)
-                print("CGContextAddPath(context, path)")
+                printCode("CGContextAddPath(context, path)")
                 setContextLineSolidColorStyle(context, params: style)
                 CGContextStrokePath(context)
-                print("CGContextStrokePath(context)")
-                print("// END-SOLID-STROKE")
+                printCode("CGContextStrokePath(context)")
+                printCode("// END-SOLID-STROKE")
             }
         }
         
-        print("")
+        printCode("")
         path = nil
     }
     
@@ -388,7 +404,7 @@ class VectorShapeView:UIView
         
         let color = UIColor(red: CGFloat(r)/0xFF, green: CGFloat(g)/0xFF, blue: CGFloat(b)/0xFF, alpha: a)
         CGContextSetStrokeColorWithColor(context, color.CGColor)
-        print(String(format: "CGContextSetStrokeColorWithColor(context, %@.CGColor)", getUIColorCode(color) as NSString))
+        printCode(String(format: "CGContextSetStrokeColorWithColor(context, %@.CGColor)", getUIColorCode(color) as NSString))
         
         if let data = getUnifyValue(params, key: "thickness")
         {
@@ -400,7 +416,7 @@ class VectorShapeView:UIView
         }
         
         CGContextSetLineWidth(context, lineWidth)
-        print(String(format: "CGContextSetLineWidth(context, %.1f)", lineWidth))
+        printCode(String(format: "CGContextSetLineWidth(context, %.1f)", lineWidth))
         
         if let data = getUnifyValue(params, key: "caps")
         {
@@ -418,7 +434,7 @@ class VectorShapeView:UIView
         }
         
         CGContextSetLineCap(context, lineCap)
-        print(String(format: "CGContextSetLineCap(context, CGLineCap(rawValue:%d)!)", lineCap.rawValue))
+        printCode(String(format: "CGContextSetLineCap(context, CGLineCap(rawValue:%d)!)", lineCap.rawValue))
         
         if let data = getUnifyValue(params, key: "joints")
         {
@@ -437,7 +453,7 @@ class VectorShapeView:UIView
         }
         
         CGContextSetLineJoin(context, lineJoin)
-        print(String(format: "CGContextSetLineJoin(context, CGLineJoin(rawValue:%d)!)", lineJoin.rawValue))
+        printCode(String(format: "CGContextSetLineJoin(context, CGLineJoin(rawValue:%d)!)", lineJoin.rawValue))
         
         if let data = getUnifyValue(params, key: "miterLimit")
         {
@@ -449,7 +465,7 @@ class VectorShapeView:UIView
         }
         
         CGContextSetMiterLimit(context, miterLimit)
-        print(String(format: "CGContextSetMiterLimit(context, %.1f)", miterLimit))
+        printCode(String(format: "CGContextSetMiterLimit(context, %.1f)", miterLimit))
     }
     
     func getUnifyValue(params:NSDictionary, key:String) -> AnyObject?
@@ -467,10 +483,10 @@ class VectorShapeView:UIView
     {
         let gradientPath = CGPathCreateCopyByStrokingPath(path, nil, lineWidth, lineCap, lineJoin, miterLimit)
         CGContextAddPath(context, gradientPath)
-        print(String(format: "gradientPath = CGPathCreateCopyByStrokingPath(path, nil, %.1f, CGLineCap(rawValue:%d)!, CGLineJoin(rawValue:%d)!, %.1f)", lineWidth, lineCap.rawValue, lineJoin.rawValue, miterLimit))
-        print("CGContextAddPath(context, gradientPath)")
+        printCode(String(format: "gradientPath = CGPathCreateCopyByStrokingPath(path, nil, %.1f, CGLineCap(rawValue:%d)!, CGLineJoin(rawValue:%d)!, %.1f)", lineWidth, lineCap.rawValue, lineJoin.rawValue, miterLimit))
+        printCode("CGContextAddPath(context, gradientPath)")
         CGContextClip(context)
-        print("CGContextClip(context)")
+        printCode("CGContextClip(context)")
         
         fillContextGradientStyle(context, params: style)
     }
@@ -499,7 +515,7 @@ class VectorShapeView:UIView
             let endCenter = CGPointMake(matrix.tx, matrix.ty)
             
             CGContextDrawRadialGradient(context, style.gradient, startCenter, 0, endCenter, endRadius, CGGradientDrawingOptions.DrawsAfterEndLocation)
-            print(String(format: "CGContextDrawRadialGradient(context, gradient, CGPointMake(%.1f, %.1f), 0, CGPointMake(%.1f, %.1f), %.1f, CGGradientDrawingOptions.DrawsAfterEndLocation)",
+            printCode(String(format: "CGContextDrawRadialGradient(context, gradient, CGPointMake(%.1f, %.1f), 0, CGPointMake(%.1f, %.1f), %.1f, CGGradientDrawingOptions.DrawsAfterEndLocation)",
                 startCenter.x, startCenter.y, endCenter.x, endCenter.y, endRadius))
         }
         else
@@ -512,7 +528,7 @@ class VectorShapeView:UIView
                                        ep.x * sin(angle) + ep.y * cos(angle) + matrix.ty)
             
             CGContextDrawLinearGradient(context, style.gradient, startPoint, endPoint, CGGradientDrawingOptions(rawValue: 0))
-            print(String(format: "CGContextDrawLinearGradient(context, gradient, CGPointMake(%.1f, %.1f), CGPointMake(%.1f, %.1f), CGGradientDrawingOptions(rawValue: 0))",
+            printCode(String(format: "CGContextDrawLinearGradient(context, gradient, CGPointMake(%.1f, %.1f), CGPointMake(%.1f, %.1f), CGGradientDrawingOptions(rawValue: 0))",
                 startPoint.x, startPoint.y, endPoint.x, endPoint.y))
         }
     }
