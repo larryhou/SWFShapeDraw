@@ -229,9 +229,9 @@ class VectorShapeView:UIView
         quiet || printCode(String(format: "CGContextScaleCTM(context, scale, scale)"))
         
         let translateX = -(irect.origin.x + irect.width  / 2) + rect.width  / 2 / scale
-        quiet || printCode(String(format: "let translateX = -(%.2f + %.2f  / 2) + rect.width  / 2 / scale", irect.origin.x, irect.width ))
+        quiet || printCode(String(format: "let translateX = -(%.2f + %.2f / 2) + rect.width  / 2 / scale", irect.origin.x, irect.width ))
         let translateY = -(irect.origin.y + irect.height / 2) + rect.height / 2 / scale
-        quiet || printCode(String(format: "let translateY = -(%.2f + %.2f  / 2) + rect.height  / 2 / scale", irect.origin.y, irect.height ))
+        quiet || printCode(String(format: "let translateY = -(%.2f + %.2f / 2) + rect.height / 2 / scale", irect.origin.y, irect.height ))
         CGContextTranslateCTM(context, translateX, translateY)
         quiet || printCode("CGContextTranslateCTM(context, translateX, translateY)")
         quiet || printCode("")
