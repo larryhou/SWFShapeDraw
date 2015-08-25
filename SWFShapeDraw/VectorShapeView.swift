@@ -223,14 +223,17 @@ class VectorShapeView:UIView
         quiet || printCode("CGContextSaveGState(context)")
         
         let margin:CGFloat = 40.0
-        let scale:CGFloat = min((rect.width - margin) / irect.width, (rect.height - margin) / irect.height)
+        let scale = min((rect.width - margin) / irect.width, (rect.height - margin) / irect.height)
+        quiet || printCode(String(format: "let scale = min((rect.width - %.2f) / %.2f, (rect.height - %.2f) / %.2f)", margin, irect.width, margin, irect.height))
         CGContextScaleCTM(context, scale, scale)
-        quiet || printCode(String(format: "CGContextScaleCTM(context, %.4f, %.4f)", scale, scale))
+        quiet || printCode(String(format: "CGContextScaleCTM(context, scale, scale)"))
         
-        let translateX:CGFloat = -(irect.origin.x + irect.width  / 2) + rect.width  / 2 / scale
-        let translateY:CGFloat = -(irect.origin.y + irect.height / 2) + rect.height / 2 / scale
+        let translateX = -(irect.origin.x + irect.width  / 2) + rect.width  / 2 / scale
+        quiet || printCode(String(format: "let translateX = -(%.2f + %.2f  / 2) + rect.width  / 2 / scale", irect.origin.x, irect.width ))
+        let translateY = -(irect.origin.y + irect.height / 2) + rect.height / 2 / scale
+        quiet || printCode(String(format: "let translateY = -(%.2f + %.2f  / 2) + rect.height  / 2 / scale", irect.origin.y, irect.height ))
         CGContextTranslateCTM(context, translateX, translateY)
-        quiet || printCode(String(format: "CGContextTranslateCTM(context, %6.2f, %6.2f)", translateX, translateY))
+        quiet || printCode("CGContextTranslateCTM(context, translateX, translateY)")
         quiet || printCode("")
         
         for i in 0..<currentIndex
