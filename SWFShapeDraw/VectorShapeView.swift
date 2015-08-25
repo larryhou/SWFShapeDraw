@@ -139,6 +139,7 @@ class VectorShapeView:UIView
     override func drawRect(rect: CGRect)
     {
         let context = UIGraphicsGetCurrentContext()
+        
         print("let context = UIGraphicsGetCurrentContext()")
         print("var gradient:CGGradient!")
         print("var path:CGMutablePath!")
@@ -146,16 +147,18 @@ class VectorShapeView:UIView
         print("var colors:[CGColor]")
         print("")
         
-        CGContextTranslateCTM(context, -irect.origin.x + (bounds.width - irect.width) / 2,
-                                       -irect.origin.y + (bounds.height - irect.height) / 2)
-        print(String(format: "CGContextTranslateCTM(context, %6.2f, %6.2f)",
-            -irect.origin.x + (bounds.width - irect.width) / 2,
-            -irect.origin.y + (bounds.height - irect.height) / 2))
+        CGContextSaveGState(context)
+        print("CGContextSaveGState(context)")
         
         let margin:CGFloat = 40.0
         let scale:CGFloat = min((rect.width - margin) / irect.width, (rect.height - margin) / irect.height)
         CGContextScaleCTM(context, scale, scale)
         print(String(format: "CGContextScaleCTM(context, %.4f, %.4f)", scale, scale))
+        
+        let translateX:CGFloat = -(irect.origin.x + irect.width  / 2) + rect.width  / 2 / scale
+        let translateY:CGFloat = -(irect.origin.y + irect.height / 2) + rect.height / 2 / scale
+        CGContextTranslateCTM(context, translateX, translateY)
+        print(String(format: "CGContextTranslateCTM(context, %6.2f, %6.2f)", translateX, translateY))
         print("")
         
         for i in 0..<queue.count
@@ -165,6 +168,9 @@ class VectorShapeView:UIView
         }
         
         tryStrokeContextPath(context)
+        
+        CGContextRestoreGState(context)
+        print("CGContextRestoreGState(context)")
     }
     
     func drawByStep(context:CGContext?, step:(method:String, params:NSDictionary))

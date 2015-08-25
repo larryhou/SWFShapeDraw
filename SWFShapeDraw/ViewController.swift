@@ -119,19 +119,29 @@ class ViewController: UIViewController
                 case "MOVE_TO", "LINE_TO":
                     x = CGFloat(params.valueForKey("x") as! Double)
                     y = CGFloat(params.valueForKey("y") as! Double)
+                    unionBoundsWithPoint(&bounds, x: x, y: y)
+                
                 case "CURVE_TO":
                     x = CGFloat(params.valueForKey("anchorX") as! Double)
                     y = CGFloat(params.valueForKey("anchorY") as! Double)
+                    unionBoundsWithPoint(&bounds, x: x, y: y)
+                    
+                    x = CGFloat(params.valueForKey("controlX") as! Double)
+                    y = CGFloat(params.valueForKey("controlY") as! Double)
+                    unionBoundsWithPoint(&bounds, x: x, y: y)
                 default:break
             }
-            
-            bounds.left   = min(x, bounds.left)
-            bounds.right  = max(x, bounds.right)
-            bounds.top    = min(y, bounds.top)
-            bounds.bottom = max(y, bounds.bottom)
         }
         
         shape.irect = CGRectMake(bounds.left, bounds.top, bounds.right - bounds.left, bounds.bottom - bounds.top)
+    }
+    
+    func unionBoundsWithPoint(inout bounds:(left:CGFloat, top:CGFloat, right:CGFloat, bottom:CGFloat), x:CGFloat, y:CGFloat)
+    {
+        bounds.left   = min(x, bounds.left)
+        bounds.right  = max(x, bounds.right)
+        bounds.top    = min(y, bounds.top)
+        bounds.bottom = max(y, bounds.bottom)
     }
     
     func drawShape()
