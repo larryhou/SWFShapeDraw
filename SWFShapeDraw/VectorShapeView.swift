@@ -413,7 +413,7 @@ class VectorShapeView:UIView
         }
         
         CGContextSetLineWidth(context, lineWidth)
-        quiet || printCode(String(format: "CGContextSetLineWidth(context, %.1f)", lineWidth))
+        quiet || printCode(String(format: "CGContextSetLineWidth(context, %.2f)", lineWidth))
         
         if let data = getUnifyValue(params, key: "caps")
         {
@@ -462,7 +462,7 @@ class VectorShapeView:UIView
         }
         
         CGContextSetMiterLimit(context, miterLimit)
-        quiet || printCode(String(format: "CGContextSetMiterLimit(context, %.1f)", miterLimit))
+        quiet || printCode(String(format: "CGContextSetMiterLimit(context, %.2f)", miterLimit))
     }
     
     func getUnifyValue(params:NSDictionary, key:String) -> AnyObject?
@@ -480,7 +480,7 @@ class VectorShapeView:UIView
     {
         let gradientPath = CGPathCreateCopyByStrokingPath(path, nil, lineWidth, lineCap, lineJoin, miterLimit)
         CGContextAddPath(context, gradientPath)
-        quiet || printCode(String(format: "gradientPath = CGPathCreateCopyByStrokingPath(path, nil, %.1f, CGLineCap(rawValue:%d)!, CGLineJoin(rawValue:%d)!, %.1f)", lineWidth, lineCap.rawValue, lineJoin.rawValue, miterLimit))
+        quiet || printCode(String(format: "gradientPath = CGPathCreateCopyByStrokingPath(path, nil, %.2f, CGLineCap(rawValue:%d)!, CGLineJoin(rawValue:%d)!, %.2f)", lineWidth, lineCap.rawValue, lineJoin.rawValue, miterLimit))
         quiet || printCode("CGContextAddPath(context, gradientPath)")
         CGContextClip(context)
         quiet || printCode("CGContextClip(context)")
@@ -512,7 +512,7 @@ class VectorShapeView:UIView
             let endCenter = CGPointMake(matrix.tx, matrix.ty)
             
             CGContextDrawRadialGradient(context, style.gradient, startCenter, 0, endCenter, endRadius, CGGradientDrawingOptions.DrawsAfterEndLocation)
-            quiet || printCode(String(format: "CGContextDrawRadialGradient(context, gradient, CGPointMake(%.1f, %.1f), 0, CGPointMake(%.1f, %.1f), %.1f, CGGradientDrawingOptions.DrawsAfterEndLocation)",
+            quiet || printCode(String(format: "CGContextDrawRadialGradient(context, gradient, CGPointMake(%.2f, %.2f), 0, CGPointMake(%.2f, %.2f), %.2f, CGGradientDrawingOptions.DrawsAfterEndLocation)",
                 startCenter.x, startCenter.y, endCenter.x, endCenter.y, endRadius))
         }
         else
@@ -525,7 +525,7 @@ class VectorShapeView:UIView
                                        ep.x * sin(angle) + ep.y * cos(angle) + matrix.ty)
             
             CGContextDrawLinearGradient(context, style.gradient, startPoint, endPoint, CGGradientDrawingOptions(rawValue: 0))
-            quiet || printCode(String(format: "CGContextDrawLinearGradient(context, gradient, CGPointMake(%.1f, %.1f), CGPointMake(%.1f, %.1f), CGGradientDrawingOptions(rawValue: 0))",
+            quiet || printCode(String(format: "CGContextDrawLinearGradient(context, gradient, CGPointMake(%.2f, %.2f), CGPointMake(%.2f, %.2f), CGGradientDrawingOptions(rawValue: 0))",
                 startPoint.x, startPoint.y, endPoint.x, endPoint.y))
         }
     }
