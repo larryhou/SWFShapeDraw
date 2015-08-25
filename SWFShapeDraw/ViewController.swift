@@ -60,13 +60,13 @@ class TestView:UIView
 
 class ViewController: UIViewController
 {
-    private var steps:NSArray!
-    private var stepIndex = 0
     private var shape:VectorShapeView!
 
     override func viewDidLoad()
     {
         super.viewDidLoad()
+        
+        var steps:NSArray!
         let jurl = NSBundle.mainBundle().URLForResource("graph", withExtension: "json")
         if jurl != nil
         {
@@ -81,10 +81,6 @@ class ViewController: UIViewController
                 print(error)
                 return
             }
-            
-            stepIndex = 0
-//            NSTimer.scheduledTimerWithTimeInterval(1.0/50, target: self, selector: "timeTickUpdate:", userInfo: nil, repeats: true)
-            
         }
         
         let testView = TestView(frame: view.frame)
@@ -100,18 +96,28 @@ class ViewController: UIViewController
         shape.backgroundColor = UIColor(white: 0.9, alpha: 1.0)
         view.addSubview(shape)
         
-        setupShape()
-        drawShape()
+        drawShape(steps)
     }
     
-    func setupShape()
+    func unionBoundsWithPoint(inout bounds:(left:CGFloat, top:CGFloat, right:CGFloat, bottom:CGFloat), x:CGFloat, y:CGFloat)
     {
+        bounds.left   = min(x, bounds.left)
+        bounds.right  = max(x, bounds.right)
+        bounds.top    = min(y, bounds.top)
+        bounds.bottom = max(y, bounds.bottom)
+    }
+    
+    func drawShape(steps:NSArray)
+    {
+        var list:[(method:String, params:NSDictionary)] = []
         var bounds:(left:CGFloat, top:CGFloat, right:CGFloat, bottom:CGFloat) = (0,0,0,0)
+        
         for i in 0..<steps.count
         {
             let data = steps[i] as! NSArray
             let method = data.objectAtIndex(0) as! String
             let params = data.objectAtIndex(1) as! NSDictionary
+            list.append((method, params))
             
             var x:CGFloat = 0.0, y:CGFloat = 0.0
             switch method
@@ -120,7 +126,7 @@ class ViewController: UIViewController
                     x = CGFloat(params.valueForKey("x") as! Double)
                     y = CGFloat(params.valueForKey("y") as! Double)
                     unionBoundsWithPoint(&bounds, x: x, y: y)
-                
+                    
                 case "CURVE_TO":
                     x = CGFloat(params.valueForKey("anchorX") as! Double)
                     y = CGFloat(params.valueForKey("anchorY") as! Double)
@@ -134,45 +140,21 @@ class ViewController: UIViewController
         }
         
         shape.irect = CGRectMake(bounds.left, bounds.top, bounds.right - bounds.left, bounds.bottom - bounds.top)
-    }
-    
-    func unionBoundsWithPoint(inout bounds:(left:CGFloat, top:CGFloat, right:CGFloat, bottom:CGFloat), x:CGFloat, y:CGFloat)
-    {
-        bounds.left   = min(x, bounds.left)
-        bounds.right  = max(x, bounds.right)
-        bounds.top    = min(y, bounds.top)
-        bounds.bottom = max(y, bounds.bottom)
-    }
-    
-    func drawShape()
-    {
-        for i in 0..<steps.count
-        {
-            let data = steps[i] as! NSArray
-            let method = data.objectAtIndex(0) as! String
-            let params = data.objectAtIndex(1) as! NSDictionary
-            
-            shape.doStep(method, params: params)
-        }
+        shape.importSteps(list)
         
-        shape.setNeedsDisplay()
+        NSTimer.scheduledTimerWithTimeInterval(1.0 / 24, target: self, selector: "timeTickUpdate:", userInfo: nil, repeats: true)
     }
     
     func timeTickUpdate(timer:NSTimer)
     {
-        if (stepIndex >= steps.count)
+        if shape.stepsAvaiable
+        {
+            shape.setNeedsDisplay()
+        }
+        else
         {
             timer.invalidate()
-            return
         }
-        
-        let data = steps[stepIndex] as! NSArray
-        let method = data.objectAtIndex(0) as! String
-        let params = data.objectAtIndex(1) as! NSDictionary
-        
-        shape.doStep(method, params: params)
-        
-        stepIndex++
     }
 
     override func didReceiveMemoryWarning()

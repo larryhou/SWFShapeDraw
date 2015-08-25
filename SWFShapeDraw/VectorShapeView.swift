@@ -47,14 +47,14 @@ class VectorShapeView:UIView
         {
             switch method
             {
-                case "MOVE_TO"              :return DrawAction.MoveTo
-                case "LINE_TO"              :return DrawAction.LineTo
-                case "CURVE_TO"             :return DrawAction.CurveTo
-                case "LINE_STYLE"           :return DrawAction.LineStyle
-                case "LINE_GRADIENT_STYLE"  :return DrawAction.LineGradientStyle
-                case "BEGIN_FILL"           :return DrawAction.BeginFill
-                case "BEGIN_GRADIENT_FILL"  :return DrawAction.BeginGradientFill
-                case "END_FILL"             :return DrawAction.EndFill
+                case "MOVE_TO"             :return DrawAction.MoveTo
+                case "LINE_TO"             :return DrawAction.LineTo
+                case "CURVE_TO"            :return DrawAction.CurveTo
+                case "LINE_STYLE"          :return DrawAction.LineStyle
+                case "LINE_GRADIENT_STYLE" :return DrawAction.LineGradientStyle
+                case "BEGIN_FILL"          :return DrawAction.BeginFill
+                case "BEGIN_GRADIENT_FILL" :return DrawAction.BeginGradientFill
+                case "END_FILL"            :return DrawAction.EndFill
                 default:return nil
             }
         }
@@ -69,7 +69,7 @@ class VectorShapeView:UIView
     }
     
     private var state:GraphicsState!
-    private var queue:[(method:String, params:NSDictionary)] = []
+    private var steps:[(method:String, params:NSDictionary)] = []
     
     private var path:CGMutablePath!
     private var style:NSDictionary!
@@ -80,11 +80,14 @@ class VectorShapeView:UIView
     private var miterLimit:CGFloat = 3.0
     
     var irect:CGRect!
-    dynamic var flushAvailable:Bool = false
     
-    func doStep(method:String, params:NSDictionary)
+    var currentIndex:Int = 0
+    var stepsAvaiable:Bool { return currentIndex < steps.count }
+    
+    func importSteps(data:[(method:String, params:NSDictionary)])
     {
-        queue.append((method, params))
+        steps = data
+        currentIndex = 0
     }
     
     func getUIColorCode(color:UIColor)->String
@@ -176,7 +179,7 @@ class VectorShapeView:UIView
     override func drawRect(rect: CGRect)
     {
         let context = UIGraphicsGetCurrentContext()
-        
+
         print("let context = UIGraphicsGetCurrentContext()")
         print("var gradient:CGGradient!")
         print("var path:CGMutablePath!")
@@ -186,7 +189,7 @@ class VectorShapeView:UIView
         
         CGContextSaveGState(context)
         print("CGContextSaveGState(context)")
-        
+    
         let margin:CGFloat = 40.0
         let scale:CGFloat = min((rect.width - margin) / irect.width, (rect.height - margin) / irect.height)
         CGContextScaleCTM(context, scale, scale)
@@ -198,34 +201,51 @@ class VectorShapeView:UIView
         print(String(format: "CGContextTranslateCTM(context, %6.2f, %6.2f)", translateX, translateY))
         print("")
         
-        for i in 0..<queue.count
+        var index = currentIndex
+        while index < steps.count
         {
-            let step = queue[i]
-//            if let action = DrawAction.from(step.method)
-//            {
-//                if DrawAction.ChangeStyle.contains(action) || action == DrawAction.EndFill
-//                {
-//                    flushCurrentContext(context)
-//                }
-//            }
+            let step = steps[index]
+            print(step.method)
+            if let action = DrawAction.from(step.method)
+            {
+                if DrawAction.ChangeStyle.contains(action) || action == DrawAction.EndFill
+                {
+                    if (index > currentIndex)
+                    {
+                        break
+                    }
+                }
+            }
             
-            drawByStep(context, step: step)
+            index++
+        }
+        
+        currentIndex = min(index, steps.count)
+        for i in 0..<currentIndex
+        {
+            let step = steps[i]
+            if let action = DrawAction.from(step.method)
+            {
+                if DrawAction.ChangeStyle.contains(action) || action == DrawAction.EndFill && path != nil
+                {
+                    flushCurrentContext(context)
+                }
+            }
+            
+            drawStep(context, step: step)
         }
         
         flushCurrentContext(context)
         
         CGContextRestoreGState(context)
-        print("CGContextRestoreGState(context)")
     }
     
-    func drawByStep(context:CGContext?, step:(method:String, params:NSDictionary))
+    func drawStep(context:CGContext?, step:(method:String, params:NSDictionary))
     {
         let params = step.params
         switch step.method
         {
             case "LINE_STYLE":
-                flushCurrentContext(context)
-                
                 state = GraphicsState.SolidStroke
                 style = params
                 
@@ -235,8 +255,6 @@ class VectorShapeView:UIView
                 print("path = CGPathCreateMutable()")
             
             case "LINE_GRADIENT_STYLE":
-                flushCurrentContext(context)
-                
                 state = GraphicsState.GradientStroke
                 style = params
                 
@@ -264,8 +282,6 @@ class VectorShapeView:UIView
                     getCoord(params, key: "anchorX"),  getCoord(params, key: "anchorY")))
                 
             case "BEGIN_FILL":
-                flushCurrentContext(context)
-                
                 state = GraphicsState.SolidFill
                 style = params
                 
@@ -275,8 +291,6 @@ class VectorShapeView:UIView
                 print("path = CGPathCreateMutable()")
             
             case "BEGIN_GRADIENT_FILL":
-                flushCurrentContext(context)
-                
                 state = GraphicsState.GradientFill
                 style = params
                 
@@ -285,9 +299,7 @@ class VectorShapeView:UIView
                 path = CGPathCreateMutable()
                 print("path = CGPathCreateMutable()")
             
-            case "END_FILL":
-                flushCurrentContext(context)
-            
+            case "END_FILL":break
             default:break
         }
     }
