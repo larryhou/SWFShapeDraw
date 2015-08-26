@@ -179,25 +179,6 @@ class RedrawView:UIImageView
     func drawNextFrame()
     {
         let rect = bounds
-        var index = currentIndex
-        while index < steps.count
-        {
-            let step = steps[index]
-            if let action = DrawAction.from(step.method)
-            {
-                if DrawAction.ChangeStyle.contains(action) || action == DrawAction.EndFill
-                {
-                    if (index > currentIndex)
-                    {
-                        break
-                    }
-                }
-            }
-            
-            index++
-        }
-        
-        index = min(index, steps.count)
         
         UIGraphicsBeginImageContextWithOptions(rect.size, false, UIScreen.mainScreen().scale)
         let context = UIGraphicsGetCurrentContext()
@@ -233,18 +214,23 @@ class RedrawView:UIImageView
             print("")
         }
         
-        for i in currentIndex..<index
+        var index = currentIndex
+        while index < steps.count
         {
-            let step = steps[i]
+            let step = steps[index]
             if let action = DrawAction.from(step.method)
             {
-                if DrawAction.ChangeStyle.contains(action) || action == DrawAction.EndFill && path != nil
+                if DrawAction.ChangeStyle.contains(action) || action == DrawAction.EndFill
                 {
-                    flushCurrentContext(context)
+                    if index > currentIndex
+                    {
+                        break
+                    }
                 }
             }
             
             drawStep(context, step: step)
+            index++
         }
         
         flushCurrentContext(context)
