@@ -176,7 +176,7 @@ class RedrawView:UIImageView
         return color
     }
     
-    func drawNextFrame()
+    func drawNextRound()
     {
         let rect = bounds
         

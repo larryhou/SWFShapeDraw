@@ -120,7 +120,7 @@ class ViewController: UIViewController, UIScrollViewDelegate
     {
         if shape.stepsAvaiable
         {
-            shape.drawNextFrame()
+            shape.drawNextRound()
         }
         else
         {
