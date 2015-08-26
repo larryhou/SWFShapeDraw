@@ -11,18 +11,18 @@ import UIKit
 
 class RedrawView:UIImageView
 {
-    struct GraphicsState:OptionSetType
+    struct StyleState:OptionSetType
     {
         let rawValue:Int
         init(rawValue:Int) { self.rawValue = rawValue }
         
-        static let SolidStroke    = GraphicsState(rawValue: 1 << 0)
-        static let GradientStroke = GraphicsState(rawValue: 1 << 1)
-        static let SolidFill      = GraphicsState(rawValue: 1 << 2)
-        static let GradientFill   = GraphicsState(rawValue: 1 << 3)
+        static let SolidStroke    = StyleState(rawValue: 1 << 0)
+        static let GradientStroke = StyleState(rawValue: 1 << 1)
+        static let SolidFill      = StyleState(rawValue: 1 << 2)
+        static let GradientFill   = StyleState(rawValue: 1 << 3)
         
-        static let Stroke:GraphicsState = [GraphicsState.SolidStroke, GraphicsState.GradientStroke]
-        static let Fill:GraphicsState   = [GraphicsState.SolidFill,   GraphicsState.GradientFill]
+        static let Stroke:StyleState = [StyleState.SolidStroke, StyleState.GradientStroke]
+        static let Fill:StyleState   = [StyleState.SolidFill,   StyleState.GradientFill]
     }
     
     struct DrawAction:OptionSetType
@@ -68,7 +68,7 @@ class RedrawView:UIImageView
         var focalPointRatio:CGFloat
     }
     
-    private var state:GraphicsState!
+    private var state:StyleState!
     private var steps:[(method:String, params:NSDictionary)] = []
     
     private var path:CGMutablePath!
@@ -271,7 +271,7 @@ class RedrawView:UIImageView
         switch action
         {
             case DrawAction.LineStyle:
-                state = GraphicsState.SolidStroke
+                state = StyleState.SolidStroke
                 style = params
                 
                 print("// BEGIN-SOLID-STROKE")
@@ -280,7 +280,7 @@ class RedrawView:UIImageView
                 print("path = CGPathCreateMutable()")
             
             case DrawAction.LineGradientStyle:
-                state = GraphicsState.GradientStroke
+                state = StyleState.GradientStroke
                 style = params
                 
                 print("// BEGIN-GRADIENT-STROKE")
@@ -307,7 +307,7 @@ class RedrawView:UIImageView
                     getCoord(params, key: "anchorX"),  getCoord(params, key: "anchorY")))
                 
             case DrawAction.BeginFill:
-                state = GraphicsState.SolidFill
+                state = StyleState.SolidFill
                 style = params
                 
                 print("// BEGIN-SOLID-FILL")
@@ -316,7 +316,7 @@ class RedrawView:UIImageView
                 print("path = CGPathCreateMutable()")
             
             case DrawAction.BeginGradientFill:
-                state = GraphicsState.GradientFill
+                state = StyleState.GradientFill
                 style = params
                 
                 print("// BEGIN-GRADIENT-FILL")
@@ -336,9 +336,9 @@ class RedrawView:UIImageView
             return
         }
         
-        if GraphicsState.Fill.contains(state)
+        if StyleState.Fill.contains(state)
         {
-            if state == GraphicsState.GradientFill
+            if state == StyleState.GradientFill
             {
                 CGContextSaveGState(context)
                 print("CGContextSaveGState(context)")
@@ -364,9 +364,9 @@ class RedrawView:UIImageView
             }
         }
         else
-        if GraphicsState.Stroke.contains(state)
+        if StyleState.Stroke.contains(state)
         {
-            if (state == GraphicsState.GradientStroke)
+            if (state == StyleState.GradientStroke)
             {
                 CGContextSaveGState(context)
                 print("CGContextSaveGState(context)")
