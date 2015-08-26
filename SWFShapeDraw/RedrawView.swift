@@ -75,8 +75,8 @@ class RedrawView:UIImageView
     private var style:NSDictionary!
     
     private var lineWidth:CGFloat = 1.0
-    private var lineCap = CGLineCap.Round
     private var lineJoin = CGLineJoin.Round
+    private var lineCap = CGLineCap.Round
     private var miterLimit:CGFloat = 3.0
     
     var irect:CGRect!
@@ -206,7 +206,7 @@ class RedrawView:UIImageView
             image.drawInRect(rect)
         }
         
-        let margin:CGFloat = 40.0
+        let margin:CGFloat = 20.0
         let scale = min((rect.width - margin) / irect.width, (rect.height - margin) / irect.height)
         CGContextScaleCTM(context, scale, scale)
         
@@ -263,9 +263,14 @@ class RedrawView:UIImageView
     func drawStep(context:CGContext?, step:(method:String, params:NSDictionary))
     {
         let params = step.params
-        switch step.method
+        guard let action = DrawAction.from(step.method) else
         {
-            case "LINE_STYLE":
+            return
+        }
+        
+        switch action
+        {
+            case DrawAction.LineStyle:
                 state = GraphicsState.SolidStroke
                 style = params
                 
@@ -274,7 +279,7 @@ class RedrawView:UIImageView
                 path = CGPathCreateMutable()
                 print("path = CGPathCreateMutable()")
             
-            case "LINE_GRADIENT_STYLE":
+            case DrawAction.LineGradientStyle:
                 state = GraphicsState.GradientStroke
                 style = params
                 
@@ -283,17 +288,17 @@ class RedrawView:UIImageView
                 path = CGPathCreateMutable()
                 print("path = CGPathCreateMutable()")
             
-            case "LINE_TO":
+            case DrawAction.LineTo:
                 CGPathAddLineToPoint(path, nil,
                     getCoord(params, key: "x"), getCoord(params, key: "y"))
                 print(String(format:"CGPathAddLineToPoint(path, nil, %6.2f, %6.2f)", getCoord(params, key: "x"), getCoord(params, key: "y")))
             
-            case "MOVE_TO":
+            case DrawAction.MoveTo:
                 CGPathMoveToPoint(path, nil,
                     getCoord(params, key: "x"), getCoord(params, key: "y"))
                 print(String(format:"CGPathMoveToPoint(path, nil, %6.2f, %6.2f)", getCoord(params, key: "x"), getCoord(params, key: "y")))
             
-            case "CURVE_TO":
+            case DrawAction.CurveTo:
                 CGPathAddQuadCurveToPoint(path, nil,
                     getCoord(params, key: "controlX"), getCoord(params, key: "controlY"),
                     getCoord(params, key: "anchorX"),  getCoord(params, key: "anchorY"))
@@ -301,7 +306,7 @@ class RedrawView:UIImageView
                     getCoord(params, key: "controlX"), getCoord(params, key: "controlY"),
                     getCoord(params, key: "anchorX"),  getCoord(params, key: "anchorY")))
                 
-            case "BEGIN_FILL":
+            case DrawAction.BeginFill:
                 state = GraphicsState.SolidFill
                 style = params
                 
@@ -310,7 +315,7 @@ class RedrawView:UIImageView
                 path = CGPathCreateMutable()
                 print("path = CGPathCreateMutable()")
             
-            case "BEGIN_GRADIENT_FILL":
+            case DrawAction.BeginGradientFill:
                 state = GraphicsState.GradientFill
                 style = params
                 
@@ -319,7 +324,7 @@ class RedrawView:UIImageView
                 path = CGPathCreateMutable()
                 print("path = CGPathCreateMutable()")
             
-            case "END_FILL":break
+            case DrawAction.EndFill:break
             default:break
         }
     }
