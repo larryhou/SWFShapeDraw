@@ -125,8 +125,8 @@ class RedrawView:UIView
         
         let gradient = CGGradientCreateWithColors(CGColorSpaceCreateDeviceRGB(), rgbaColors.map({$0.CGColor}), &locations)
         
-        quiet || printCode("colors = [" + ",".join(rgbaColors.map({ getUIColorCode($0) + ".CGColor" })) + "]")
-        quiet || printCode("locations = [" + ",".join(locations.map({String(format:"%.4f", $0)})) + "]")
+        quiet || printCode("colors = [" + rgbaColors.map({ getUIColorCode($0) + ".CGColor" }).joinWithSeparator(",") + "]")
+        quiet || printCode("locations = [" + locations.map({String(format:"%.4f", $0)}).joinWithSeparator(",") + "]")
         quiet || printCode("gradient = CGGradientCreateWithColors(CGColorSpaceCreateDeviceRGB(), colors, &locations)")
         
         var matrix:(a:CGFloat, b:CGFloat, c:CGFloat, d:CGFloat, tx:CGFloat, ty:CGFloat) = (0,0,0,0,0,0)
