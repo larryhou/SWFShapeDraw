@@ -12,7 +12,6 @@ import Foundation
 class ViewController: UIViewController, UIScrollViewDelegate
 {
     private var shape:RedrawView!
-    private var pinch:UIPinchGestureRecognizer!
 
     override func viewDidLoad()
     {
