@@ -9,7 +9,7 @@
 import Foundation
 import UIKit
 
-class RedrawView:UIView
+class RedrawView:UIImageView
 {
     struct GraphicsState:OptionSetType
     {
@@ -83,12 +83,6 @@ class RedrawView:UIView
     
     var currentIndex:Int = 0
     var stepsAvaiable:Bool { return currentIndex < steps.count }
-    var quiet:Bool = false
-    
-    func printCode(value:String) -> Bool
-    {
-        print(value); return true
-    }
     
     func importSteps(data:[(method:String, params:NSDictionary)])
     {
@@ -125,9 +119,9 @@ class RedrawView:UIView
         
         let gradient = CGGradientCreateWithColors(CGColorSpaceCreateDeviceRGB(), rgbaColors.map({$0.CGColor}), &locations)
         
-        quiet || printCode("colors = [" + rgbaColors.map({ getUIColorCode($0) + ".CGColor" }).joinWithSeparator(",") + "]")
-        quiet || printCode("locations = [" + locations.map({String(format:"%.4f", $0)}).joinWithSeparator(",") + "]")
-        quiet || printCode("gradient = CGGradientCreateWithColors(CGColorSpaceCreateDeviceRGB(), colors, &locations)")
+        print("colors = [" + rgbaColors.map({ getUIColorCode($0) + ".CGColor" }).joinWithSeparator(",") + "]")
+        print("locations = [" + locations.map({String(format:"%.4f", $0)}).joinWithSeparator(",") + "]")
+        print("gradient = CGGradientCreateWithColors(CGColorSpaceCreateDeviceRGB(), colors, &locations)")
         
         var matrix:(a:CGFloat, b:CGFloat, c:CGFloat, d:CGFloat, tx:CGFloat, ty:CGFloat) = (0,0,0,0,0,0)
         matrix.a = CGFloat(params.valueForKeyPath("matrix.a") as! Double)
@@ -182,8 +176,9 @@ class RedrawView:UIView
         return color
     }
     
-    override func drawRect(rect: CGRect)
+    func drawNextFrame()
     {
+        let rect = bounds
         var index = currentIndex
         while index < steps.count
         {
@@ -202,41 +197,43 @@ class RedrawView:UIView
             index++
         }
         
-        currentIndex = min(index, steps.count)
+        index = min(index, steps.count)
         
-        quiet = true
-        if currentIndex == steps.count
-        {
-            quiet = false
-        }
-        
+        UIGraphicsBeginImageContextWithOptions(rect.size, false, UIScreen.mainScreen().scale)
         let context = UIGraphicsGetCurrentContext()
-        
-        quiet || printCode("let context = UIGraphicsGetCurrentContext()")
-        quiet || printCode("var gradient:CGGradient!")
-        quiet || printCode("var path:CGMutablePath!")
-        quiet || printCode("var locations:[CGFloat]")
-        quiet || printCode("var colors:[CGColor]")
-        quiet || printCode("")
-        
-        CGContextSaveGState(context)
-        quiet || printCode("CGContextSaveGState(context)")
+        if let image = self.image
+        {
+            image.drawInRect(rect)
+        }
         
         let margin:CGFloat = 40.0
         let scale = min((rect.width - margin) / irect.width, (rect.height - margin) / irect.height)
-        quiet || printCode(String(format: "let scale = min((rect.width - %.2f) / %.2f, (rect.height - %.2f) / %.2f)", margin, irect.width, margin, irect.height))
         CGContextScaleCTM(context, scale, scale)
-        quiet || printCode(String(format: "CGContextScaleCTM(context, scale, scale)"))
         
         let translateX = -(irect.origin.x + irect.width  / 2) + rect.width  / 2 / scale
-        quiet || printCode(String(format: "let translateX = -(%.2f + %.2f / 2) + rect.width  / 2 / scale", irect.origin.x, irect.width ))
         let translateY = -(irect.origin.y + irect.height / 2) + rect.height / 2 / scale
-        quiet || printCode(String(format: "let translateY = -(%.2f + %.2f / 2) + rect.height / 2 / scale", irect.origin.y, irect.height ))
         CGContextTranslateCTM(context, translateX, translateY)
-        quiet || printCode("CGContextTranslateCTM(context, translateX, translateY)")
-        quiet || printCode("")
         
-        for i in 0..<currentIndex
+        if currentIndex == 0
+        {
+            print("let context = UIGraphicsGetCurrentContext()")
+            print("var gradient:CGGradient!")
+            print("var path:CGMutablePath!")
+            print("var locations:[CGFloat]")
+            print("var colors:[CGColor]")
+            print("")
+            
+            print("CGContextSaveGState(context)")
+            print(String(format: "let scale = min((rect.width - %.2f) / %.2f, (rect.height - %.2f) / %.2f)", margin, irect.width, margin, irect.height))
+            print(String(format: "CGContextScaleCTM(context, scale, scale)"))
+            
+            print(String(format: "let translateX = -(%.2f + %.2f / 2) + rect.width  / 2 / scale", irect.origin.x, irect.width ))
+            print(String(format: "let translateY = -(%.2f + %.2f / 2) + rect.height / 2 / scale", irect.origin.y, irect.height ))
+            print("CGContextTranslateCTM(context, translateX, translateY)")
+            print("")
+        }
+        
+        for i in currentIndex..<index
         {
             let step = steps[i]
             if let action = DrawAction.from(step.method)
@@ -252,8 +249,15 @@ class RedrawView:UIView
         
         flushCurrentContext(context)
         
-        CGContextRestoreGState(context)
-        quiet || printCode("CGContextRestoreGState(context)")
+        self.image = UIGraphicsGetImageFromCurrentImageContext()
+        
+        UIGraphicsEndImageContext()
+        
+        currentIndex = index
+        if currentIndex == steps.count
+        {
+            print("CGContextRestoreGState(context)")
+        }
     }
     
     func drawStep(context:CGContext?, step:(method:String, params:NSDictionary))
@@ -265,35 +269,35 @@ class RedrawView:UIView
                 state = GraphicsState.SolidStroke
                 style = params
                 
-                quiet || printCode("// BEGIN-SOLID-STROKE")
+                print("// BEGIN-SOLID-STROKE")
                 
                 path = CGPathCreateMutable()
-                quiet || printCode("path = CGPathCreateMutable()")
+                print("path = CGPathCreateMutable()")
             
             case "LINE_GRADIENT_STYLE":
                 state = GraphicsState.GradientStroke
                 style = params
                 
-                quiet || printCode("// BEGIN-GRADIENT-STROKE")
+                print("// BEGIN-GRADIENT-STROKE")
                 
                 path = CGPathCreateMutable()
-                quiet || printCode("path = CGPathCreateMutable()")
+                print("path = CGPathCreateMutable()")
             
             case "LINE_TO":
                 CGPathAddLineToPoint(path, nil,
                     getCoord(params, key: "x"), getCoord(params, key: "y"))
-                quiet || printCode(String(format:"CGPathAddLineToPoint(path, nil, %6.2f, %6.2f)", getCoord(params, key: "x"), getCoord(params, key: "y")))
+                print(String(format:"CGPathAddLineToPoint(path, nil, %6.2f, %6.2f)", getCoord(params, key: "x"), getCoord(params, key: "y")))
             
             case "MOVE_TO":
                 CGPathMoveToPoint(path, nil,
                     getCoord(params, key: "x"), getCoord(params, key: "y"))
-                quiet || printCode(String(format:"CGPathMoveToPoint(path, nil, %6.2f, %6.2f)", getCoord(params, key: "x"), getCoord(params, key: "y")))
+                print(String(format:"CGPathMoveToPoint(path, nil, %6.2f, %6.2f)", getCoord(params, key: "x"), getCoord(params, key: "y")))
             
             case "CURVE_TO":
                 CGPathAddQuadCurveToPoint(path, nil,
                     getCoord(params, key: "controlX"), getCoord(params, key: "controlY"),
                     getCoord(params, key: "anchorX"),  getCoord(params, key: "anchorY"))
-                quiet || printCode(String(format:"CGPathAddQuadCurveToPoint(path, nil, %6.2f, %6.2f, %6.2f, %6.2f)",
+                print(String(format:"CGPathAddQuadCurveToPoint(path, nil, %6.2f, %6.2f, %6.2f, %6.2f)",
                     getCoord(params, key: "controlX"), getCoord(params, key: "controlY"),
                     getCoord(params, key: "anchorX"),  getCoord(params, key: "anchorY")))
                 
@@ -301,19 +305,19 @@ class RedrawView:UIView
                 state = GraphicsState.SolidFill
                 style = params
                 
-                quiet || printCode("// BEGIN-SOLID-FILL")
+                print("// BEGIN-SOLID-FILL")
                 
                 path = CGPathCreateMutable()
-                quiet || printCode("path = CGPathCreateMutable()")
+                print("path = CGPathCreateMutable()")
             
             case "BEGIN_GRADIENT_FILL":
                 state = GraphicsState.GradientFill
                 style = params
                 
-                quiet || printCode("// BEGIN-GRADIENT-FILL")
+                print("// BEGIN-GRADIENT-FILL")
                 
                 path = CGPathCreateMutable()
-                quiet || printCode("path = CGPathCreateMutable()")
+                print("path = CGPathCreateMutable()")
             
             case "END_FILL":break
             default:break
@@ -332,26 +336,26 @@ class RedrawView:UIView
             if state == GraphicsState.GradientFill
             {
                 CGContextSaveGState(context)
-                quiet || printCode("CGContextSaveGState(context)")
+                print("CGContextSaveGState(context)")
                 CGContextAddPath(context, path)
-                quiet || printCode("CGContextAddPath(context, path)")
+                print("CGContextAddPath(context, path)")
                 CGContextClip(context)
-                quiet || printCode("CGContextClip(context)")
+                print("CGContextClip(context)")
                 fillContextGradientStyle(context, params: style)
                 CGContextRestoreGState(context)
-                quiet || printCode("CGContextRestoreGState(context)")
-                quiet || printCode("// END-GRADIENT-FILL")
+                print("CGContextRestoreGState(context)")
+                print("// END-GRADIENT-FILL")
             }
             else
             {
                 CGContextAddPath(context, path)
-                quiet || printCode("CGContextAddPath(context, path)")
+                print("CGContextAddPath(context, path)")
                 let color = getColor(style, colorKey: "color", alphaKey: "alpha")
                 CGContextSetFillColorWithColor(context, color.CGColor)
-                quiet || printCode(String(format: "CGContextSetFillColorWithColor(context, %@.CGColor)", getUIColorCode(color)))
+                print(String(format: "CGContextSetFillColorWithColor(context, %@.CGColor)", getUIColorCode(color)))
                 CGContextFillPath(context)
-                quiet || printCode("CGContextFillPath(context)")
-                quiet || printCode("// END-SOLID-FILL")
+                print("CGContextFillPath(context)")
+                print("// END-SOLID-FILL")
             }
         }
         else
@@ -360,24 +364,24 @@ class RedrawView:UIView
             if (state == GraphicsState.GradientStroke)
             {
                 CGContextSaveGState(context)
-                quiet || printCode("CGContextSaveGState(context)")
+                print("CGContextSaveGState(context)")
                 strokePathWithGradientStyle(context, path: path)
                 CGContextRestoreGState(context)
-                quiet || printCode("CGContextRestoreGState(context)")
-                quiet || printCode("// END-GRADIENT-STROKE")
+                print("CGContextRestoreGState(context)")
+                print("// END-GRADIENT-STROKE")
             }
             else
             {
                 CGContextAddPath(context, path)
-                quiet || printCode("CGContextAddPath(context, path)")
+                print("CGContextAddPath(context, path)")
                 setContextLineSolidColorStyle(context, params: style)
                 CGContextStrokePath(context)
-                quiet || printCode("CGContextStrokePath(context)")
-                quiet || printCode("// END-SOLID-STROKE")
+                print("CGContextStrokePath(context)")
+                print("// END-SOLID-STROKE")
             }
         }
         
-        quiet || printCode("")
+        print("")
         path = nil
     }
     
@@ -404,7 +408,7 @@ class RedrawView:UIView
         
         let color = UIColor(red: CGFloat(r)/0xFF, green: CGFloat(g)/0xFF, blue: CGFloat(b)/0xFF, alpha: a)
         CGContextSetStrokeColorWithColor(context, color.CGColor)
-        quiet || printCode(String(format: "CGContextSetStrokeColorWithColor(context, %@.CGColor)", getUIColorCode(color) as NSString))
+        print(String(format: "CGContextSetStrokeColorWithColor(context, %@.CGColor)", getUIColorCode(color) as NSString))
         
         if let data = getUnifyValue(params, key: "thickness")
         {
@@ -416,7 +420,7 @@ class RedrawView:UIView
         }
         
         CGContextSetLineWidth(context, lineWidth)
-        quiet || printCode(String(format: "CGContextSetLineWidth(context, %.2f)", lineWidth))
+        print(String(format: "CGContextSetLineWidth(context, %.2f)", lineWidth))
         
         if let data = getUnifyValue(params, key: "caps")
         {
@@ -434,7 +438,7 @@ class RedrawView:UIView
         }
         
         CGContextSetLineCap(context, lineCap)
-        quiet || printCode(String(format: "CGContextSetLineCap(context, CGLineCap(rawValue:%d)!)", lineCap.rawValue))
+        print(String(format: "CGContextSetLineCap(context, CGLineCap(rawValue:%d)!)", lineCap.rawValue))
         
         if let data = getUnifyValue(params, key: "joints")
         {
@@ -453,7 +457,7 @@ class RedrawView:UIView
         }
         
         CGContextSetLineJoin(context, lineJoin)
-        quiet || printCode(String(format: "CGContextSetLineJoin(context, CGLineJoin(rawValue:%d)!)", lineJoin.rawValue))
+        print(String(format: "CGContextSetLineJoin(context, CGLineJoin(rawValue:%d)!)", lineJoin.rawValue))
         
         if let data = getUnifyValue(params, key: "miterLimit")
         {
@@ -465,7 +469,7 @@ class RedrawView:UIView
         }
         
         CGContextSetMiterLimit(context, miterLimit)
-        quiet || printCode(String(format: "CGContextSetMiterLimit(context, %.2f)", miterLimit))
+        print(String(format: "CGContextSetMiterLimit(context, %.2f)", miterLimit))
     }
     
     func getUnifyValue(params:NSDictionary, key:String) -> AnyObject?
@@ -483,10 +487,10 @@ class RedrawView:UIView
     {
         let gradientPath = CGPathCreateCopyByStrokingPath(path, nil, lineWidth, lineCap, lineJoin, miterLimit)
         CGContextAddPath(context, gradientPath)
-        quiet || printCode(String(format: "gradientPath = CGPathCreateCopyByStrokingPath(path, nil, %.2f, CGLineCap(rawValue:%d)!, CGLineJoin(rawValue:%d)!, %.2f)", lineWidth, lineCap.rawValue, lineJoin.rawValue, miterLimit))
-        quiet || printCode("CGContextAddPath(context, gradientPath)")
+        print(String(format: "gradientPath = CGPathCreateCopyByStrokingPath(path, nil, %.2f, CGLineCap(rawValue:%d)!, CGLineJoin(rawValue:%d)!, %.2f)", lineWidth, lineCap.rawValue, lineJoin.rawValue, miterLimit))
+        print("CGContextAddPath(context, gradientPath)")
         CGContextClip(context)
-        quiet || printCode("CGContextClip(context)")
+        print("CGContextClip(context)")
         
         fillContextGradientStyle(context, params: style)
     }
@@ -515,7 +519,7 @@ class RedrawView:UIView
             let endCenter = CGPointMake(matrix.tx, matrix.ty)
             
             CGContextDrawRadialGradient(context, style.gradient, startCenter, 0, endCenter, endRadius, CGGradientDrawingOptions.DrawsAfterEndLocation)
-            quiet || printCode(String(format: "CGContextDrawRadialGradient(context, gradient, CGPointMake(%.2f, %.2f), 0, CGPointMake(%.2f, %.2f), %.2f, CGGradientDrawingOptions.DrawsAfterEndLocation)",
+            print(String(format: "CGContextDrawRadialGradient(context, gradient, CGPointMake(%.2f, %.2f), 0, CGPointMake(%.2f, %.2f), %.2f, CGGradientDrawingOptions.DrawsAfterEndLocation)",
                 startCenter.x, startCenter.y, endCenter.x, endCenter.y, endRadius))
         }
         else
@@ -528,7 +532,7 @@ class RedrawView:UIView
                                        ep.x * sin(angle) + ep.y * cos(angle) + matrix.ty)
             
             CGContextDrawLinearGradient(context, style.gradient, startPoint, endPoint, CGGradientDrawingOptions(rawValue: 0))
-            quiet || printCode(String(format: "CGContextDrawLinearGradient(context, gradient, CGPointMake(%.2f, %.2f), CGPointMake(%.2f, %.2f), CGGradientDrawingOptions(rawValue: 0))",
+            print(String(format: "CGContextDrawLinearGradient(context, gradient, CGPointMake(%.2f, %.2f), CGPointMake(%.2f, %.2f), CGGradientDrawingOptions(rawValue: 0))",
                 startPoint.x, startPoint.y, endPoint.x, endPoint.y))
         }
     }

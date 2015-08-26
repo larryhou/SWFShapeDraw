@@ -12,7 +12,10 @@ import Foundation
 class ViewController: UIViewController, UIScrollViewDelegate
 {
     private var shape:RedrawView!
+    private var tapGuesture:UITapGestureRecognizer!
 
+    @IBOutlet weak var imageView: UIImageView!
+    
     override func viewDidLoad()
     {
         super.viewDidLoad()
@@ -21,6 +24,11 @@ class ViewController: UIViewController, UIScrollViewDelegate
         view.delegate = self
         view.maximumZoomScale = 2.0
         view.minimumZoomScale = 1.0
+        
+        tapGuesture = UITapGestureRecognizer()
+        tapGuesture.addTarget(self, action: "tapAction:")
+        tapGuesture.numberOfTapsRequired = 2
+        view.addGestureRecognizer(tapGuesture)
         
         var steps:NSArray!
         let jurl = NSBundle.mainBundle().URLForResource("graph", withExtension: "json")
@@ -41,10 +49,20 @@ class ViewController: UIViewController, UIScrollViewDelegate
         
         shape = RedrawView(frame:view.frame);
         shape.backgroundColor = UIColor.clearColor()
-        shape.center = CGPoint(x: CGRectGetMidX(shape.bounds), y: CGRectGetMidY(shape.bounds))
         view.addSubview(shape)
         
         drawShape(steps)
+    }
+    
+    func tapAction(guesture:UITapGestureRecognizer)
+    {
+        if !shape.stepsAvaiable
+        {
+            shape.currentIndex = 0
+            shape.image = nil
+            
+            startDrawingAnimation()
+        }
     }
     
     func unionBoundsWithPoint(inout bounds:(left:CGFloat, top:CGFloat, right:CGFloat, bottom:CGFloat), x:CGFloat, y:CGFloat)
@@ -90,6 +108,11 @@ class ViewController: UIViewController, UIScrollViewDelegate
         shape.irect = CGRectMake(bounds.left, bounds.top, bounds.right - bounds.left, bounds.bottom - bounds.top)
         shape.importSteps(list)
         
+        startDrawingAnimation()
+    }
+    
+    func startDrawingAnimation()
+    {
         NSTimer.scheduledTimerWithTimeInterval(1.0 / 25, target: self, selector: "timeTickUpdate:", userInfo: nil, repeats: true)
     }
     
@@ -97,7 +120,7 @@ class ViewController: UIViewController, UIScrollViewDelegate
     {
         if shape.stepsAvaiable
         {
-            shape.setNeedsDisplay()
+            shape.drawNextFrame()
         }
         else
         {
@@ -114,7 +137,11 @@ class ViewController: UIViewController, UIScrollViewDelegate
     override func didReceiveMemoryWarning()
     {
         super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
+    }
+    
+    deinit
+    {
+        tapGuesture.removeTarget(self, action: "tapAction:")
     }
 }
 
