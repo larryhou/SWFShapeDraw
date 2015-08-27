@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+	<body>
+		<canvas id="shapeCanvas" width="1024" height="768" style="border:1px solid #d3d3d3;">
+		Your browser does not support the HTML5 canvas tag.
+		</canvas>
+
+		<script type="text/javascript">
+			var c = document.getElementById("shapeCanvas");
+			c.height = document.body.clientHeight
+			c.width = document.body.clientWidth
+			
+			var context=c.getContext("2d")
+			console.log(context)
+			var bounds = {x:0, y:0, width:187.45, height:211.75}
+			var canvas = context.canvas
+			var margin = 40
+			var scale = Math.min((canvas.width - margin) / bounds.width, (canvas.height - margin) / bounds.height)
+			context.scale(scale, scale)
+			var translateX = -(bounds.x + bounds.width  / 2) + canvas.width  / 2 / scale
+			var translateY = -(bounds.y + bounds.height / 2) + canvas.height / 2 / scale
+			context.translate(translateX, translateY)
+			var gradient
+			gradient = context.createLinearGradient(151.1375, 183.5125, 141.06, 221.09)
+			gradient.addColorStop(0, 'rgba(135,45,31,1)')
+			gradient.addColorStop(1, 'rgba(192,118,35,1)')
+			context.strokeStyle = gradient
+			context.beginPath()
+			context.moveTo(54, 198.65)
+			context.quadraticCurveTo(52.75, 180.8, 53.85, 158.25)
+			context.stroke()
+			context.moveTo(65.2, 159.25)
+			context.quadraticCurveTo(65.2, 183.05, 62.1, 201.45)
+			context.stroke()
+			context.moveTo(47.2, 196.25)
+			context.quadraticCurveTo(43.4, 177.65, 43.6, 154.2)
+			context.stroke()
+			context.moveTo(48.85, 156.65)
+			context.quadraticCurveTo(48.6, 179.4, 50.65, 197.5)
+			context.stroke()
+			context.moveTo(59.5, 159.2)
+			context.quadraticCurveTo(59.2, 183.5, 57.45, 199.85)
+			context.stroke()
+		</script> 
+
+	</body>
+</html>
