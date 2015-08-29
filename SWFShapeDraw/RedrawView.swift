@@ -522,9 +522,10 @@ class RedrawView:UIImageView
             let endPoint = CGPointMake(ep.x * cos(angle) - ep.y * sin(angle) + matrix.tx,
                                        ep.x * sin(angle) + ep.y * cos(angle) + matrix.ty)
             
-            CGContextDrawLinearGradient(context, style.gradient, startPoint, endPoint, CGGradientDrawingOptions(rawValue: 0))
-            print(String(format: "CGContextDrawLinearGradient(context, gradient, CGPointMake(%.2f, %.2f), CGPointMake(%.2f, %.2f), CGGradientDrawingOptions(rawValue: 0))",
-                startPoint.x, startPoint.y, endPoint.x, endPoint.y))
+            let options:CGGradientDrawingOptions = [CGGradientDrawingOptions.DrawsBeforeStartLocation, CGGradientDrawingOptions.DrawsAfterEndLocation]
+            CGContextDrawLinearGradient(context, style.gradient, startPoint, endPoint, options)
+            print(String(format: "CGContextDrawLinearGradient(context, gradient, CGPointMake(%.2f, %.2f), CGPointMake(%.2f, %.2f), CGGradientDrawingOptions(rawValue: %d))",
+                startPoint.x, startPoint.y, endPoint.x, endPoint.y, options.rawValue))
         }
     }
 }
