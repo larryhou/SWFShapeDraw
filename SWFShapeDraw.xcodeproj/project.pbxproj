@@ -15,6 +15,9 @@
 		6B6925001B85A2B2009DD4E1 /* SWFShapeDrawTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B6924FF1B85A2B2009DD4E1 /* SWFShapeDrawTests.swift */; };
 		6B69250B1B85A2B2009DD4E1 /* SWFShapeDrawUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B69250A1B85A2B2009DD4E1 /* SWFShapeDrawUITests.swift */; };
 		6B6925191B85A4AC009DD4E1 /* graph.json in Resources */ = {isa = PBXBuildFile; fileRef = 6B6925181B85A4AC009DD4E1 /* graph.json */; };
+		6B6C64591BB52C020098D023 /* VectorImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B6C64581BB52C020098D023 /* VectorImageView.swift */; settings = {ASSET_TAGS = (); }; };
+		6B6C645A1BB545F30098D023 /* VectorImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B6C64581BB52C020098D023 /* VectorImageView.swift */; settings = {ASSET_TAGS = (); }; };
+		6B6C645C1BB54BEF0098D023 /* graph.json in Resources */ = {isa = PBXBuildFile; fileRef = 6B6925181B85A4AC009DD4E1 /* graph.json */; settings = {ASSET_TAGS = (); }; };
 		6B7CA2B81B884D6A00DA9BD7 /* RedrawView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7CA2B71B884D6A00DA9BD7 /* RedrawView.swift */; };
 /* End PBXBuildFile section */
 
@@ -50,6 +53,7 @@
 		6B69250A1B85A2B2009DD4E1 /* SWFShapeDrawUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWFShapeDrawUITests.swift; sourceTree = "<group>"; };
 		6B69250C1B85A2B2009DD4E1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		6B6925181B85A4AC009DD4E1 /* graph.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = graph.json; sourceTree = "<group>"; };
+		6B6C64581BB52C020098D023 /* VectorImageView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VectorImageView.swift; sourceTree = "<group>"; };
 		6B7CA2B71B884D6A00DA9BD7 /* RedrawView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RedrawView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -105,6 +109,7 @@
 				6B6924EA1B85A2B2009DD4E1 /* AppDelegate.swift */,
 				6B6924EC1B85A2B2009DD4E1 /* ViewController.swift */,
 				6B7CA2B71B884D6A00DA9BD7 /* RedrawView.swift */,
+				6B6C64581BB52C020098D023 /* VectorImageView.swift */,
 				6B6924EE1B85A2B2009DD4E1 /* Main.storyboard */,
 				6B6924F11B85A2B2009DD4E1 /* Assets.xcassets */,
 				6B6924F31B85A2B2009DD4E1 /* LaunchScreen.storyboard */,
@@ -253,6 +258,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6B6C645C1BB54BEF0098D023 /* graph.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -271,6 +277,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6B6924ED1B85A2B2009DD4E1 /* ViewController.swift in Sources */,
+				6B6C64591BB52C020098D023 /* VectorImageView.swift in Sources */,
 				6B6924EB1B85A2B2009DD4E1 /* AppDelegate.swift in Sources */,
 				6B7CA2B81B884D6A00DA9BD7 /* RedrawView.swift in Sources */,
 			);
@@ -281,6 +288,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6B6925001B85A2B2009DD4E1 /* SWFShapeDrawTests.swift in Sources */,
+				6B6C645A1BB545F30098D023 /* VectorImageView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -442,7 +450,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.larryhou.samples.SWFShapeDrawTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SWFShapeDraw.app/SWFShapeDraw";
+				TEST_HOST = "";
 			};
 			name = Debug;
 		};
@@ -454,13 +462,14 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.larryhou.samples.SWFShapeDrawTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SWFShapeDraw.app/SWFShapeDraw";
+				TEST_HOST = "";
 			};
 			name = Release;
 		};
 		6B6925161B85A2B2009DD4E1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = SWFShapeDrawUITests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.larryhou.samples.SWFShapeDrawUITests;
@@ -473,6 +482,7 @@
 		6B6925171B85A2B2009DD4E1 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = SWFShapeDrawUITests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.larryhou.samples.SWFShapeDrawUITests;

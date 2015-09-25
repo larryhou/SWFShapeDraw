@@ -9,28 +9,39 @@
 import XCTest
 @testable import SWFShapeDraw
 
-class SWFShapeDrawTests: XCTestCase {
+class SWFShapeDrawTests: XCTestCase
+{
     
-    override func setUp() {
-        super.setUp()
-        // Put setup code here. This method is called before the invocation of each test method in the class.
-    }
-    
-    override func tearDown() {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
-        super.tearDown()
-    }
-    
-    func testExample() {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-    }
-    
-    func testPerformanceExample() {
-        // This is an example of a performance test case.
-        self.measureBlock {
-            // Put the code you want to measure the time of here.
+    func testQuartzPerformance()
+    {
+        let bundle = NSBundle(forClass: VectorImageView.self)
+        let url = bundle.URLForResource("graph", withExtension: "json")
+        assert(url != nil)
+        
+        var steps:NSArray!
+        if url != nil
+        {
+            let data = NSData(contentsOfURL: url!)
+            
+            do
+            {
+                steps = try NSJSONSerialization.JSONObjectWithData(data!, options: NSJSONReadingOptions.AllowFragments) as! NSArray
+            }
+            catch
+            {
+                assertionFailure("JSON parsing failed")
+            }
+        }
+        
+        let rect = UIScreen.mainScreen().bounds
+        UIGraphicsBeginImageContextWithOptions(rect.size, false, UIScreen.mainScreen().scale)
+        
+        let vector = VectorImageView(frame:rect)
+        vector.backgroundColor = UIColor(white: 0.9, alpha: 1.0)
+        vector.importVectorGraphics(steps)
+        self.measureBlock
+        {
+            vector.drawRect(rect)
         }
     }
-    
 }

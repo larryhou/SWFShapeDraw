@@ -51,6 +51,11 @@ class ViewController: UIViewController, UIScrollViewDelegate
         shape.backgroundColor = UIColor.clearColor()
         view.addSubview(shape)
         
+//        let vector = VectorImageView(frame:view.frame)
+//        vector.backgroundColor = UIColor(white: 0.9, alpha: 1.0)
+//        vector.importVectorGraphics(steps)
+//        view.addSubview(vector)
+        
         drawShape(steps)
     }
     
