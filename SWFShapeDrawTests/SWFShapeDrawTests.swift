@@ -7,7 +7,6 @@
 //
 
 import XCTest
-@testable import SWFShapeDraw
 
 class SWFShapeDrawTests: XCTestCase
 {
